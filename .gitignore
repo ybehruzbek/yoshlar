@@ -1,0 +1,11 @@
+node_modules/
+.next/
+dist/
+build/
+.DS_Store
+.env.local
+.env.*.local
+*.log
+# Do NOT ignore .agent and .agents folders
+!.agent/
+!.agents/
