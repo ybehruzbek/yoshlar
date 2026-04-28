@@ -1,70 +1,100 @@
 "use client";
 import { useState } from "react";
+import {
+  ChartBar, Users, CreditCard, FileText, Scales, CalendarBlank,
+  ChartLineUp, Target, Bell, ArrowUpRight, ArrowDownRight,
+  CurrencyCircleDollar, WarningCircle, Export, FilePlus, Eye,
+  CaretRight, TrendUp, CheckCircle, Clock, Gavel,
+} from "@phosphor-icons/react";
 
+
+
+/* ─── NAV ─── */
 const NAV = [
-  { icon: "📊", label: "Dashboard", badge: null, active: true },
-  { icon: "👥", label: "Qarzdorlar", badge: "900", active: false },
-  { icon: "💳", label: "To'lovlar", badge: null, active: false },
-  { icon: "📄", label: "Hujjatlar", badge: null, active: false },
-  { icon: "⚖️", label: "Sud bo'limi", badge: "12", badgeColor: "yellow", active: false },
-  { icon: "📅", label: "Kalendar", badge: null, active: false },
-  { icon: "📈", label: "Hisobotlar", badge: null, active: false },
-  { icon: "🎯", label: "KPI", badge: null, active: false },
+  { icon: ChartBar, label: "Dashboard", badge: null, active: true },
+  { icon: Users, label: "Qarzdorlar", badge: "900", active: false },
+  { icon: CreditCard, label: "To'lovlar", badge: null, active: false },
+  { icon: FileText, label: "Hujjatlar", badge: null, active: false },
+  { icon: Scales, label: "Sud bo'limi", badge: "12", badgeColor: "yellow", active: false },
+  { icon: CalendarBlank, label: "Kalendar", badge: null, active: false },
+  { icon: ChartLineUp, label: "Hisobotlar", badge: null, active: false },
+  { icon: Target, label: "KPI", badge: null, active: false },
 ];
 
+/* ─── CHART DATA ─── */
 const MONTHS = ["Yan","Fev","Mar","Apr","May","Iyn","Iyl","Avg","Sen","Okt","Noy","Dek"];
-const PAYMENTS = [1820,2100,1650,2450,1900,2800,2200,3100,2600,2900,3400,2100];
-const MAX_PAY = Math.max(...PAYMENTS);
+const PAYMENTS = [
+  { bank: 1100, payme: 720 },
+  { bank: 1300, payme: 800 },
+  { bank: 1000, payme: 650 },
+  { bank: 1500, payme: 950 },
+  { bank: 1200, payme: 700 },
+  { bank: 1700, payme: 1100 },
+  { bank: 1400, payme: 800 },
+  { bank: 1900, payme: 1200 },
+  { bank: 1600, payme: 1000 },
+  { bank: 1800, payme: 1100 },
+  { bank: 2100, payme: 1300 },
+  { bank: 1300, payme: 800 }
+];
+const MAX_VAL = 3500; // Adjusted for double bars
 
-const COLORS = {
-  faol: { color: "#10b981", pct: 71 },
-  kechikkan: { color: "#f59e0b", pct: 18 },
-  sudda: { color: "#ef4444", pct: 7 },
-  tolangan: { color: "#3b82f6", pct: 4 },
+const STATUS_COLORS: Record<string, { color: string; pct: number }> = {
+  Faol: { color: "#30d158", pct: 71 },
+  Kechikkan: { color: "#ff9f0a", pct: 18 },
+  Sudda: { color: "#ff453a", pct: 7 },
+  "To'langan": { color: "#0071e3", pct: 4 },
 };
 
+/* ─── TABLE DATA ─── */
 const LATE = [
-  { name: "KADIROV ODIL M.", days: 182, sum: "22 577 489", risk: 94, type: "20 yil" },
-  { name: "RUZIYEV SHERBEK SH.", days: 156, sum: "17 562 520", risk: 87, type: "20 yil" },
-  { name: "BURIYEVA XULKAR T.", days: 134, sum: "46 017 598", risk: 82, type: "7 yil" },
-  { name: "SODIQOV ANVAR SH.", days: 98, sum: "15 570 080", risk: 71, type: "20 yil" },
-  { name: "ARALOV QUVONCH J.", days: 76, sum: "38 377 038", risk: 65, type: "7 yil" },
+  { name: "Kadirov Odil M.", days: 182, sum: "22 577 489", risk: 94, type: "20 yil" },
+  { name: "Ruziyev Sherbek Sh.", days: 156, sum: "17 562 520", risk: 87, type: "20 yil" },
+  { name: "Buriyeva Xulkar T.", days: 134, sum: "46 017 598", risk: 82, type: "7 yil" },
+  { name: "Sodiqov Anvar Sh.", days: 98, sum: "15 570 080", risk: 71, type: "20 yil" },
+  { name: "Aralov Quvonch J.", days: 76, sum: "38 377 038", risk: 65, type: "7 yil" },
 ];
 
 const UPCOMING = [
-  { name: "MAMATKULOVA SHAHLOHON", sum: "290 000", sana: "2026-04-22", tur: "20 yil" },
-  { name: "BOLTAYEV FURQAT B.", sum: "290 000", sana: "2026-04-23", tur: "20 yil" },
-  { name: "NAYIMOV AZIZBEK E.", sum: "783 916", sana: "2026-04-24", tur: "7 yil" },
-  { name: "TURSUNOV DAVRON D.", sum: "290 000", sana: "2026-04-25", tur: "20 yil" },
-  { name: "YUSUPOV ILXOM U.", sum: "290 000", sana: "2026-04-26", tur: "20 yil" },
+  { name: "Mamatkulova Shahlohon", sum: "290 000", date: "22-apr", tur: "20 yil" },
+  { name: "Boltayev Furqat B.", sum: "290 000", date: "23-apr", tur: "20 yil" },
+  { name: "Nayimov Azizbek E.", sum: "783 916", date: "24-apr", tur: "7 yil" },
+  { name: "Tursunov Davron D.", sum: "290 000", date: "25-apr", tur: "20 yil" },
+  { name: "Yusupov Ilxom U.", sum: "290 000", date: "26-apr", tur: "20 yil" },
 ];
 
+const formatSum = (val: number) => {
+  const short = val >= 1000 ? (val / 1000).toFixed(1) + " mlrd" : val + " mln";
+  const full = (val * 1000000).toLocaleString('fr-FR');
+  return `${short} (${full} so'm)`;
+};
+
+/* ─── DONUT CHART ─── */
 function DonutChart() {
-  const size = 140;
-  const r = 52;
+  const size = 160;
+  const r = 58;
   const cx = size / 2;
   const cy = size / 2;
   const circ = 2 * Math.PI * r;
-  const entries = Object.entries(COLORS);
+  const entries = Object.entries(STATUS_COLORS);
   let offset = 0;
   const segments = entries.map(([, v]) => {
     const len = (v.pct / 100) * circ;
-    const seg = { dasharray: `${len - 2} ${circ - len + 2}`, dashoffset: -offset, color: v.color };
+    const seg = { da: `${len - 4} ${circ - len + 4}`, off: -offset, color: v.color };
     offset += len;
     return seg;
   });
 
   return (
     <div className="donut-wrap">
-      <div className="donut-svg" style={{ width: size, height: size, position: "relative" }}>
+      <div className="donut-container" style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: "rotate(-90deg)" }}>
-          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#1a2540" strokeWidth={18} />
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f0f0f2" strokeWidth={18} />
           {segments.map((s, i) => (
             <circle key={i} cx={cx} cy={cy} r={r} fill="none"
               stroke={s.color} strokeWidth={18}
-              strokeDasharray={s.dasharray}
-              strokeDashoffset={s.dashoffset}
-              strokeLinecap="butt"
+              strokeDasharray={s.da} strokeDashoffset={s.off}
+              strokeLinecap="round"
             />
           ))}
         </svg>
@@ -73,12 +103,12 @@ function DonutChart() {
           <div className="donut-total-label">jami</div>
         </div>
       </div>
-      <div className="legend" style={{ width: "100%" }}>
-        {Object.entries(COLORS).map(([key, v]) => (
-          <div className="legend-item" key={key}>
+      <div className="legend">
+        {entries.map(([key, v]) => (
+          <div className="legend-row" key={key}>
             <div className="legend-dot" style={{ background: v.color }} />
-            <div className="legend-name">{key.charAt(0).toUpperCase() + key.slice(1)}</div>
-            <div className="legend-val" style={{ color: v.color }}>{Math.round(900 * v.pct / 100)}</div>
+            <div className="legend-name">{key}</div>
+            <div className="legend-val">{Math.round(900 * v.pct / 100)}</div>
             <div className="legend-pct">{v.pct}%</div>
           </div>
         ))}
@@ -87,6 +117,7 @@ function DonutChart() {
   );
 }
 
+/* ─── RISK BAR ─── */
 function RiskBar({ value, color }: { value: number; color: string }) {
   return (
     <div className="risk-bar-wrap">
@@ -97,22 +128,38 @@ function RiskBar({ value, color }: { value: number; color: string }) {
     </div>
   );
 }
+const riskColor = (v: number) => v >= 80 ? "#ff453a" : v >= 60 ? "#ff6723" : v >= 40 ? "#ff9f0a" : "#30d158";
 
-const riskColor = (v: number) => v >= 80 ? "#ef4444" : v >= 60 ? "#f97316" : v >= 40 ? "#f59e0b" : "#10b981";
+/* ═══════════ NAV ITEM RENDERER ═══════════ */
+function NavItem({ item }: { item: typeof NAV[0] }) {
+  const Icon = item.icon;
+  return (
+    <div className={`nav-item ${item.active ? "active" : ""}`}>
+      <span className="nav-icon"><Icon size={20} weight={item.active ? "fill" : "regular"} /></span>
+      {item.label}
+      {item.badge && (
+        <span className={`nav-badge ${"badgeColor" in item && item.badgeColor === "yellow" ? "yellow" : ""}`}>
+          {item.badge}
+        </span>
+      )}
+    </div>
+  );
+}
 
+/* ═══════════════════════════════════
+   MAIN DASHBOARD
+   ═══════════════════════════════════ */
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("yillik");
-  const now = new Date();
-  const dateStr = now.toLocaleDateString("uz-UZ", { year: "numeric", month: "long", day: "numeric" });
 
   return (
     <div className="layout">
-      {/* SIDEBAR */}
+      {/* ═══ SIDEBAR ═══ */}
       <aside className="sidebar">
         <div className="sidebar-logo">
           <div className="logo-badge">
-            <div className="logo-icon">🏛️</div>
-            <div className="logo-text">
+            <div className="logo-icon"><Gavel size={22} weight="fill" /></div>
+            <div>
               <div className="logo-title">Yoshlar Ittifoqi</div>
               <div className="logo-sub">Qarz Monitoring</div>
             </div>
@@ -120,36 +167,11 @@ export default function Dashboard() {
         </div>
         <nav className="sidebar-nav">
           <div className="nav-label">Asosiy</div>
-          {NAV.slice(0, 4).map((item) => (
-            <div key={item.label} className={`nav-item ${item.active ? "active" : ""}`}>
-              <span className="nav-icon">{item.icon}</span>
-              {item.label}
-              {item.badge && (
-                <span className={`nav-badge ${(item as any).badgeColor === "yellow" ? "yellow" : ""}`}>
-                  {item.badge}
-                </span>
-              )}
-            </div>
-          ))}
-          <div className="nav-label" style={{ marginTop: 8 }}>Huquqiy</div>
-          {NAV.slice(4, 6).map((item) => (
-            <div key={item.label} className={`nav-item ${item.active ? "active" : ""}`}>
-              <span className="nav-icon">{item.icon}</span>
-              {item.label}
-              {item.badge && (
-                <span className={`nav-badge ${(item as any).badgeColor === "yellow" ? "yellow" : ""}`}>
-                  {item.badge}
-                </span>
-              )}
-            </div>
-          ))}
-          <div className="nav-label" style={{ marginTop: 8 }}>Tahlil</div>
-          {NAV.slice(6).map((item) => (
-            <div key={item.label} className={`nav-item ${item.active ? "active" : ""}`}>
-              <span className="nav-icon">{item.icon}</span>
-              {item.label}
-            </div>
-          ))}
+          {NAV.slice(0, 4).map(item => <NavItem key={item.label} item={item} />)}
+          <div className="nav-label">Huquqiy</div>
+          {NAV.slice(4, 6).map(item => <NavItem key={item.label} item={item} />)}
+          <div className="nav-label">Tahlil</div>
+          {NAV.slice(6).map(item => <NavItem key={item.label} item={item} />)}
         </nav>
         <div className="sidebar-footer">
           <div className="user-card">
@@ -162,146 +184,138 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      {/* MAIN */}
+      {/* ═══ MAIN ═══ */}
       <main className="main">
         <div className="topbar">
-          <div className="topbar-title">Bosh sahifa</div>
-          <div className="topbar-date">{dateStr}</div>
-          <button className="topbar-btn btn-ghost">📥 Excel yuklash</button>
-          <button className="topbar-btn btn-primary">📄 Hujjat yaratish</button>
-          <div className="notif-btn">🔔<div className="notif-dot" /></div>
+          <div className="topbar-left">
+            <div className="topbar-title">Bosh sahifa</div>
+          </div>
+          <div className="topbar-actions">
+            <button className="topbar-btn btn-ghost">
+              <Export size={16} weight="bold" /> Excel
+            </button>
+            <button className="topbar-btn btn-primary">
+              <FilePlus size={16} weight="bold" /> Hujjat yaratish
+            </button>
+            <div className="notif-btn">
+              <Bell size={18} />
+              <div className="notif-dot" />
+            </div>
+          </div>
         </div>
 
         <div className="content">
-          {/* ALERT */}
+
+
+          {/* ── Alert ── */}
           <div className="alert-bar">
-            ⚠️ <span><strong>12 ta qarzdor</strong> sudga berildi — hujjatlarni ko'rib chiqing</span>
-            <span style={{ marginLeft: "auto", fontSize: 12, cursor: "pointer", color: "#f59e0b" }}>Ko'rish →</span>
+            <WarningCircle size={22} weight="fill" color="#ff9f0a" />
+            <span><strong>12 ta qarzdor</strong> sudga berildi — hujjatlarni ko&apos;rib chiqing</span>
+            <span className="alert-link">Ko&apos;rish <CaretRight size={14} weight="bold" /></span>
           </div>
 
-          {/* STATS */}
+          {/* ── Stats ── */}
           <div className="stats-grid">
             <div className="stat-card">
-              <div className="stat-glow" style={{ background: "#3b82f6" }} />
-              <div className="stat-header">
-                <div className="stat-icon-wrap" style={{ background: "rgba(59,130,246,0.12)" }}>💰</div>
-                <div className="stat-change change-up">↑ 8.2%</div>
-              </div>
-              <div className="stat-value" style={{ color: "#3b82f6" }}>63.4 mlrd</div>
+              <div className="stat-value">63 400 000 000 <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>so&apos;m</span></div>
               <div className="stat-label">Jami berilgan qarz</div>
-              <div className="stat-sub">Qoldiq: <strong style={{ color: "#e8eaf0" }}>51.2 mlrd so'm</strong></div>
+              <div className="stat-footer">Qoldiq: <strong>51.2 mlrd so&apos;m</strong></div>
             </div>
 
             <div className="stat-card">
-              <div className="stat-glow" style={{ background: "#10b981" }} />
-              <div className="stat-header">
-                <div className="stat-icon-wrap" style={{ background: "rgba(16,185,129,0.12)" }}>👥</div>
-                <div className="stat-change change-up">+14 yangi</div>
-              </div>
-              <div className="stat-value" style={{ color: "#10b981" }}>900</div>
+              <div className="stat-value">900</div>
               <div className="stat-label">Jami qarzdorlar</div>
-              <div className="stat-sub">20 yillik: <strong style={{ color: "#e8eaf0" }}>640</strong> · 7 yillik: <strong style={{ color: "#e8eaf0" }}>260</strong></div>
+              <div className="stat-footer">20 yillik: <strong>640</strong> · 7 yillik: <strong>260</strong></div>
             </div>
 
             <div className="stat-card">
-              <div className="stat-glow" style={{ background: "#f59e0b" }} />
-              <div className="stat-header">
-                <div className="stat-icon-wrap" style={{ background: "rgba(245,158,11,0.12)" }}>📅</div>
-                <div className="stat-change change-down">↓ 3.1%</div>
-              </div>
-              <div className="stat-value" style={{ color: "#f59e0b" }}>287 mln</div>
+              <div className="stat-value">287 000 000 <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>so&apos;m</span></div>
               <div className="stat-label">Bu oyda kutilgan</div>
-              <div className="stat-sub">Kelgan: <strong style={{ color: "#e8eaf0" }}>198 mln</strong> · Qolgan: 89 mln</div>
+              <div className="stat-footer">Kelgan: <strong>198 mln</strong> · Qolgan: 89 mln</div>
             </div>
 
             <div className="stat-card">
-              <div className="stat-glow" style={{ background: "#ef4444" }} />
-              <div className="stat-header">
-                <div className="stat-icon-wrap" style={{ background: "rgba(239,68,68,0.12)" }}>⚠️</div>
-                <div className="stat-change change-down">+7 bu oy</div>
-              </div>
-              <div className="stat-value" style={{ color: "#ef4444" }}>163</div>
-              <div className="stat-label">Muddati o'tganlar</div>
-              <div className="stat-sub">Jami qarz: <strong style={{ color: "#e8eaf0" }}>8.4 mlrd so'm</strong></div>
+              <div className="stat-value">163</div>
+              <div className="stat-label">Muddati o&apos;tganlar</div>
+              <div className="stat-footer">Jami qarz: <strong>8 400 000 000 so&apos;m</strong></div>
             </div>
           </div>
 
-          {/* MINI WIDGETS */}
-          <div className="top-row">
-            <div className="mini-card">
-              <div className="mini-icon" style={{ background: "rgba(59,130,246,0.12)" }}>📤</div>
-              <div style={{ flex: 1 }}>
-                <div className="mini-label">To'lov faolligi (aprel)</div>
-                <div className="mini-val" style={{ color: "#3b82f6" }}>68.9%</div>
-                <div className="progress-wrap">
-                  <div className="progress-bg">
-                    <div className="progress-fill" style={{ width: "68.9%", background: "#3b82f6" }} />
-                  </div>
+          {/* ── Overview cards ── */}
+          <div className="overview-row">
+            <div className="overview-card">
+              <div className="overview-label">To&apos;lov faolligi (aprel)</div>
+              <div className="overview-value">68.9%</div>
+              <div className="overview-bar">
+                <div className="overview-bar-bg">
+                  <div className="overview-bar-fill" style={{ width: "68.9%", background: "#0071e3" }} />
                 </div>
               </div>
             </div>
-            <div className="mini-card">
-              <div className="mini-icon" style={{ background: "rgba(16,185,129,0.12)" }}>✅</div>
-              <div style={{ flex: 1 }}>
-                <div className="mini-label">To'langan (jami)</div>
-                <div className="mini-val" style={{ color: "#10b981" }}>12.2 mlrd</div>
-                <div className="progress-wrap">
-                  <div className="progress-bg">
-                    <div className="progress-fill" style={{ width: "19%", background: "#10b981" }} />
-                  </div>
+            <div className="overview-card">
+              <div className="overview-label">To&apos;langan (jami)</div>
+              <div className="overview-value">12.2 mlrd</div>
+              <div className="overview-bar">
+                <div className="overview-bar-bg">
+                  <div className="overview-bar-fill" style={{ width: "19%", background: "#30d158" }} />
                 </div>
               </div>
             </div>
-            <div className="mini-card">
-              <div className="mini-icon" style={{ background: "rgba(239,68,68,0.12)" }}>⚖️</div>
-              <div style={{ flex: 1 }}>
-                <div className="mini-label">Sudda (faol ishlar)</div>
-                <div className="mini-val" style={{ color: "#ef4444" }}>12 ta</div>
-                <div className="progress-wrap">
-                  <div className="progress-bg">
-                    <div className="progress-fill" style={{ width: "1.3%", background: "#ef4444" }} />
-                  </div>
+            <div className="overview-card">
+              <div className="overview-label">Sudda (faol ishlar)</div>
+              <div className="overview-value">12 ta</div>
+              <div className="overview-bar">
+                <div className="overview-bar-bg">
+                  <div className="overview-bar-fill" style={{ width: "1.3%", background: "#ff453a" }} />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* CHARTS */}
+          {/* ── Charts ── */}
           <div className="charts-row">
-            <div className="chart-card">
-              <div className="card-header">
+            <div className="card">
+              <div className="card-head">
                 <div>
                   <div className="card-title">Oylik tushum</div>
-                  <div className="card-sub">So'm (mlrd) · 2025–2026</div>
+                  <div className="card-sub">So&apos;m (mlrd) · 2025–2026</div>
                 </div>
-                <div className="chart-tabs">
-                  {["oylik","yillik"].map(t => (
-                    <button key={t} className={`chart-tab ${activeTab === t ? "active" : ""}`}
+                <div className="tabs">
+                  {(["oylik","yillik"] as const).map(t => (
+                    <button key={t} className={`tab ${activeTab === t ? "active" : ""}`}
                       onClick={() => setActiveTab(t)}>
                       {t === "oylik" ? "Oylik" : "12 oy"}
                     </button>
                   ))}
                 </div>
               </div>
+              <div className="card-legend">
+                <div className="legend-item"><div className="legend-box" style={{ background: "#1d1d1f" }} /> Bank</div>
+                <div className="legend-item"><div className="legend-box" style={{ background: "#0071e3" }} /> Payme</div>
+              </div>
               <div className="bar-chart">
                 {PAYMENTS.map((v, i) => (
-                  <div className="bar-wrap" key={i}>
-                    <div className="bar-val">{(v / 1000).toFixed(1)}</div>
-                    <div className="bar" style={{
-                      height: `${(v / MAX_PAY) * 120}px`,
-                      background: i === 11
-                        ? "rgba(59,130,246,0.3)"
-                        : `linear-gradient(to top, #3b82f6, #14b8a6)`,
-                      border: i === 11 ? "1px dashed #3b82f6" : "none"
-                    }} />
+                  <div className="bar-col" key={i}>
+                    <div className="bar-group">
+                      <div className="bar bank" style={{ 
+                        height: `${(v.bank / MAX_VAL) * 150}px`
+                      }}>
+                        <div className="bar-tooltip">{formatSum(v.bank)}</div>
+                      </div>
+                      <div className="bar payme" style={{ 
+                        height: `${(v.payme / MAX_VAL) * 150}px`
+                      }}>
+                        <div className="bar-tooltip">{formatSum(v.payme)}</div>
+                      </div>
+                    </div>
                     <div className="bar-label">{MONTHS[i]}</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="chart-card">
-              <div className="card-header">
+            <div className="card">
+              <div className="card-head">
                 <div>
                   <div className="card-title">Holat taqsimoti</div>
                   <div className="card-sub">Jami 900 ta qarzdor</div>
@@ -311,97 +325,67 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* TABLES */}
+          {/* ── Tables ── */}
           <div className="tables-row">
-            {/* Late payers */}
             <div className="table-card">
-              <div className="card-header">
+              <div className="card-head">
                 <div>
-                  <div className="card-title">🔴 Eng ko'p kechikkanlar</div>
-                  <div className="card-sub">Muddati o'tgan kunlar bo'yicha</div>
+                  <div className="card-title">Eng ko&apos;p kechikkanlar</div>
+                  <div className="card-sub">Muddati o&apos;tgan kunlar bo&apos;yicha</div>
                 </div>
-                <button className="topbar-btn btn-ghost" style={{ fontSize: 11, padding: "5px 10px" }}>
-                  Barchasi →
+                <button className="topbar-btn btn-ghost" style={{ fontSize: 12, padding: "7px 14px" }}>
+                  Barchasi <CaretRight size={14} weight="bold" />
                 </button>
               </div>
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>F.I.O</th>
-                      <th>Kun</th>
-                      <th>Summa (so'm)</th>
-                      <th>Xavf</th>
-                      <th></th>
+              <table>
+                <thead>
+                  <tr><th>F.I.O</th><th>Kun</th><th>Summa</th><th>Xavf</th><th></th></tr>
+                </thead>
+                <tbody>
+                  {LATE.map((r, i) => (
+                    <tr key={i}>
+                      <td>
+                        <div className="debtor-name">{r.name}</div>
+                        <div className="debtor-sub">{r.type}</div>
+                      </td>
+                      <td><span className="day-chip">{r.days}</span></td>
+                      <td><span className="amount">{r.sum}</span></td>
+                      <td style={{ minWidth: 110 }}><RiskBar value={r.risk} color={riskColor(r.risk)} /></td>
+                      <td><div className="action-btn"><FileText size={16} /></div></td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {LATE.map((r, i) => (
-                      <tr key={i}>
-                        <td>
-                          <div className="debtor-name">{r.name}</div>
-                          <div className="debtor-id">{r.type}</div>
-                        </td>
-                        <td><span className="day-num">{r.days}</span></td>
-                        <td><span className="amount">{r.sum}</span></td>
-                        <td style={{ minWidth: 90 }}>
-                          <RiskBar value={r.risk} color={riskColor(r.risk)} />
-                        </td>
-                        <td>
-                          <div className="action-btn">📄</div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
-            {/* Upcoming */}
             <div className="table-card">
-              <div className="card-header">
+              <div className="card-head">
                 <div>
-                  <div className="card-title">🟡 Yaqinda to'lov muddati</div>
+                  <div className="card-title">Yaqinda to&apos;lov muddati</div>
                   <div className="card-sub">Kelasi 7 kun ichida</div>
                 </div>
-                <button className="topbar-btn btn-ghost" style={{ fontSize: 11, padding: "5px 10px" }}>
-                  Kalendar →
+                <button className="topbar-btn btn-ghost" style={{ fontSize: 12, padding: "7px 14px" }}>
+                  Kalendar <CaretRight size={14} weight="bold" />
                 </button>
               </div>
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>F.I.O</th>
-                      <th>Sana</th>
-                      <th>Summa (so'm)</th>
-                      <th>Tur</th>
-                      <th></th>
+              <table>
+                <thead>
+                  <tr><th>F.I.O</th><th>Sana</th><th>Summa</th><th>Tur</th><th></th></tr>
+                </thead>
+                <tbody>
+                  {UPCOMING.map((r, i) => (
+                    <tr key={i}>
+                      <td><div className="debtor-name">{r.name}</div></td>
+                      <td><span className="badge badge-yellow">{r.date}</span></td>
+                      <td><span className="amount">{r.sum}</span></td>
+                      <td>
+                        <span className={`badge ${r.tur === "7 yil" ? "badge-blue" : "badge-gray"}`}>{r.tur}</span>
+                      </td>
+                      <td><div className="action-btn"><Eye size={16} /></div></td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {UPCOMING.map((r, i) => (
-                      <tr key={i}>
-                        <td><div className="debtor-name">{r.name}</div></td>
-                        <td>
-                          <span className="badge badge-yellow">
-                            {new Date(r.sana).toLocaleDateString("uz-UZ", { month: "short", day: "numeric" })}
-                          </span>
-                        </td>
-                        <td><span className="amount">{r.sum}</span></td>
-                        <td>
-                          <span className={`badge ${r.tur === "7 yil" ? "badge-blue" : "badge-gray"}`}>
-                            {r.tur}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="action-btn">👁️</div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
