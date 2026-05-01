@@ -1,6 +1,7 @@
 "use client";
 
-import { Export, FilePlus, Bell, Moon, Sun } from "@phosphor-icons/react";
+import { Bell, Moon, Sun } from "@phosphor-icons/react";
+
 import { useTheme } from "../../context/ThemeContext";
 
 interface TopbarProps {
@@ -16,20 +17,15 @@ export function Topbar({ title }: TopbarProps) {
         <div className="topbar-title">{title}</div>
       </div>
       <div className="topbar-actions">
-        <button className="topbar-btn btn-ghost" onClick={toggleTheme} title="Rejimni o'zgartirish">
-          {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-        </button>
-        <button className="topbar-btn btn-ghost">
-          <Export size={16} weight="bold" /> Excel
-        </button>
-        <button className="topbar-btn btn-primary">
-          <FilePlus size={16} weight="bold" /> Hujjat yaratish
+        <button className="notif-btn" onClick={toggleTheme} title="Rejimni o'zgartirish">
+          {theme === "light" ? <Moon size={20} weight="bold" /> : <Sun size={20} weight="bold" />}
         </button>
         <div className="notif-btn">
-          <Bell size={18} />
+          <Bell size={20} weight="bold" />
           <div className="notif-dot" />
         </div>
       </div>
+
     </div>
   );
 }

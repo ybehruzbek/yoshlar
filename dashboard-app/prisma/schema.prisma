@@ -6,210 +6,185 @@ datasource db {
   provider = "sqlite"
 }
 
-
-
 model User {
-  id            String     @id @default(cuid())
-  name          String?
-  email         String     @unique
-  passwordHash  String
-  role          String     @default("operator") // admin, operator, viewer
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  
-  notes         Note[]
-  warnings      Warning[]
-  auditLogs     AuditLog[]
+  id           String     @id @default(cuid())
+  name         String?
+  email        String     @unique
+  passwordHash String
+  role         String     @default("operator")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  auditLogs    AuditLog[]
+  notes        Note[]
+  warnings     Warning[]
 }
 
 model Debtor {
-  id            String     @id @default(cuid())
-  tartibRaqam   Int?
-  fish          String
-  manzil        String?
-  pasport       String?    @unique
-  tugilganSana  DateTime?
-  jshshir       String?    @unique
-  telefon       String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-
-  loans         Loan[]
-  notes         Note[]
-  smsLogs       SmsLog[]
+  id           String    @id @default(cuid())
+  tartibRaqam  Int?
+  fish         String
+  manzil       String?
+  pasport      String?   @unique
+  tugilganSana DateTime?
+  jshshir      String?   @unique
+  telefon      String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  photo        String?
+  loans        Loan[]
+  notes        Note[]
+  smsLogs      SmsLog[]
 }
 
 model Loan {
-  id               String     @id @default(cuid())
+  id               String         @id @default(cuid())
   debtorId         String
-  debtor           Debtor     @relation(fields: [debtorId], references: [id], onDelete: Cascade)
-  
-  loanType         String     // "20_yil" yoki "7_yil"
+  loanType         String
   qarzSummasi      Float
   qarzMatnda       String?
   shartnomaSana    DateTime?
   notarius         String?
   reestrRaqam      String?
   holatSanasi      DateTime?
-  muddatOtganSumma Float      @default(0)
+  muddatOtganSumma Float          @default(0)
   oylikTolov       Float?
-  foizStavka       Float?     @default(0) // 7 yillik uchun
-  
-  status           String     @default("faol") // faol, kechikkan, sudda, tolangan
-  riskScore        Int        @default(0)      // 0-100
-  
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-
+  foizStavka       Float?         @default(0)
+  status           String         @default("faol")
+  riskScore        Int            @default(0)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  documents        Document[]
+  debtor           Debtor         @relation(fields: [debtorId], references: [id], onDelete: Cascade)
   schedules        LoanSchedule[]
   payments         Payment[]
-  documents        Document[]
   warnings         Warning[]
 }
 
 model LoanSchedule {
-  id         String    @id @default(cuid())
-  loanId     String
-  loan       Loan      @relation(fields: [loanId], references: [id], onDelete: Cascade)
-  
-  oyRaqam    Int
-  tolovSana  DateTime
-  asosiy     Float
-  foiz       Float     @default(0)
-  jami       Float
-  qoldiq     Float
-  tolandi    Boolean   @default(false)
-  
-  paymentId  String?   // Agar to'langan bo'lsa, payment id si
-  payment    Payment?  @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  id        String   @id @default(cuid())
+  loanId    String
+  oyRaqam   Int
+  tolovSana DateTime
+  asosiy    Float
+  foiz      Float    @default(0)
+  jami      Float
+  qoldiq    Float
+  tolandi   Boolean  @default(false)
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+  loan      Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
 }
 
 model PaymentBatch {
-  id            String     @id @default(cuid())
+  id            String    @id @default(cuid())
   faylNomi      String
-  yuklanganSana DateTime   @default(now())
-  jami          Int        @default(0)
-  moslashdi     Int        @default(0)
-  moslashmadi   Int        @default(0)
-  jamiSumma     Float      @default(0)
+  yuklanganSana DateTime  @default(now())
+  jami          Int       @default(0)
+  moslashdi     Int       @default(0)
+  moslashmadi   Int       @default(0)
+  jamiSumma     Float     @default(0)
   kimYukladi    String?
-  
   payments      Payment[]
 }
 
 model Payment {
-  id           String        @id @default(cuid())
-  loanId       String
-  loan         Loan          @relation(fields: [loanId], references: [id], onDelete: Cascade)
-  
-  summa        Float
-  tolovSana    DateTime
-  usul         String        // bank, payme
-  maqsad       String?
-  kimKiritdi   String?
-  
-  batchId      String?
-  batch        PaymentBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
-  
-  createdAt    DateTime      @default(now())
-
-  schedules    LoanSchedule[]
+  id         String         @id @default(cuid())
+  loanId     String
+  summa      Float
+  tolovSana  DateTime
+  usul       String
+  maqsad     String?
+  kimKiritdi String?
+  batchId    String?
+  createdAt  DateTime       @default(now())
+  schedules  LoanSchedule[]
+  batch      PaymentBatch?  @relation(fields: [batchId], references: [id])
+  loan       Loan           @relation(fields: [loanId], references: [id], onDelete: Cascade)
 }
 
 model Template {
-  id           String     @id @default(cuid())
-  nomi         String
-  turi         String
-  kontent      String     // HTML yoki shablon strukturasi
-  ozgaruvchilar String     // JSON
-  kimYaratdi   String?
-  updatedAt    DateTime   @updatedAt
-  
-  documents    Document[]
+  id            String     @id @default(cuid())
+  nomi          String
+  turi          String
+  kontent       String
+  ozgaruvchilar String
+  kimYaratdi    String?
+  updatedAt     DateTime   @updatedAt
+  documents     Document[]
 }
 
 model Document {
-  id           String     @id @default(cuid())
-  loanId       String
-  loan         Loan       @relation(fields: [loanId], references: [id], onDelete: Cascade)
-  
-  hujjatTuri   String
-  shablonId    String?
-  shablon      Template?  @relation(fields: [shablonId], references: [id], onDelete: SetNull)
-  
-  faylYoli     String?
-  generatedData String?    // JSON
-  holat        String     @default("yaratilgan") // yaratilgan, yuklangan, yuborilgan
-  kimYaratdi   String?
-  createdAt    DateTime   @default(now())
-
-  warnings     Warning[]
+  id            String    @id @default(cuid())
+  loanId        String
+  hujjatTuri    String
+  shablonId     String?
+  faylYoli      String?
+  generatedData String?
+  holat         String    @default("yaratilgan")
+  kimYaratdi    String?
+  createdAt     DateTime  @default(now())
+  shablon       Template? @relation(fields: [shablonId], references: [id])
+  loan          Loan      @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  warnings      Warning[]
 }
 
 model Note {
-  id           String     @id @default(cuid())
-  debtorId     String
-  debtor       Debtor     @relation(fields: [debtorId], references: [id], onDelete: Cascade)
-  
-  userId       String?
-  user         User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
-  
-  matn         String
-  eslatmaSana  DateTime?
-  isEslatma    Boolean    @default(false)
-  createdAt    DateTime   @default(now())
+  id          String    @id @default(cuid())
+  debtorId    String
+  userId      String?
+  matn        String
+  eslatmaSana DateTime?
+  isEslatma   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  user        User?     @relation(fields: [userId], references: [id])
+  debtor      Debtor    @relation(fields: [debtorId], references: [id], onDelete: Cascade)
 }
 
 model Warning {
-  id           String     @id @default(cuid())
-  loanId       String
-  loan         Loan       @relation(fields: [loanId], references: [id], onDelete: Cascade)
-  
-  userId       String?
-  user         User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
-  
-  documentId   String?
-  document     Document?  @relation(fields: [documentId], references: [id], onDelete: SetNull)
-  
-  turi         String     // ogohlantirish, talabnoma, sud_arizasi, ijro_varaqi
-  sana         DateTime   @default(now())
-  raqami       String?
-  izoh         String?
-  createdAt    DateTime   @default(now())
+  id         String    @id @default(cuid())
+  loanId     String
+  userId     String?
+  documentId String?
+  turi       String
+  sana       DateTime  @default(now())
+  raqami     String?
+  izoh       String?
+  createdAt  DateTime  @default(now())
+  document   Document? @relation(fields: [documentId], references: [id])
+  user       User?     @relation(fields: [userId], references: [id])
+  loan       Loan      @relation(fields: [loanId], references: [id], onDelete: Cascade)
 }
 
 model SmsLog {
-  id              String     @id @default(cuid())
-  debtorId        String
-  debtor          Debtor     @relation(fields: [debtorId], references: [id], onDelete: Cascade)
-  
-  telefon         String
-  matn            String
-  sabab           String
-  holat           String     // yuborildi, xato
-  yuborilganSana  DateTime   @default(now())
-  createdAt       DateTime   @default(now())
+  id             String   @id @default(cuid())
+  debtorId       String
+  telefon        String
+  matn           String
+  sabab          String
+  holat          String
+  yuborilganSana DateTime @default(now())
+  createdAt      DateTime @default(now())
+  debtor         Debtor   @relation(fields: [debtorId], references: [id], onDelete: Cascade)
 }
 
 model AuditLog {
-  id           String     @id @default(cuid())
-  userId       String?
-  user         User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
-  
-  amal         String     // create, update, delete, upload, generate
-  model        String     // loans, payments, documents...
-  modelId      String?
-  eskiQiymat   String?    // JSON
-  yangiQiymat  String?    // JSON
-  ipAddress    String?
-  createdAt    DateTime   @default(now())
+  id          String   @id @default(cuid())
+  userId      String?
+  amal        String
+  model       String
+  modelId     String?
+  eskiQiymat  String?
+  yangiQiymat String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id])
 }
 
 model PenaltySetting {
-  id           String     @id @default(cuid())
-  loanType     String     @unique // "7_yil"
+  id           String   @id @default(cuid())
+  loanType     String   @unique
   stavkaYillik Float
-  faol         Boolean    @default(true)
+  faol         Boolean  @default(true)
   updatedBy    String?
-  updatedAt    DateTime   @updatedAt
+  updatedAt    DateTime @updatedAt
 }

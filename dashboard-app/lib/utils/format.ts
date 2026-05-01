@@ -24,11 +24,12 @@ export const formatMoney = (amount: number, showCurrency: boolean = true): strin
  */
 export const formatCompact = (amount: number): string => {
   if (amount >= 1_000_000_000) {
-    return (amount / 1_000_000_000).toLocaleString('uz-UZ', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).replace('.', ',') + " mlrd";
+    return (amount / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).replace('.', ',') + " mlrd";
   }
   if (amount >= 1_000_000) {
-    return (amount / 1_000_000).toLocaleString('uz-UZ', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).replace('.', ',') + " mln";
+    return (amount / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).replace('.', ',') + " mln";
   }
+
 
   return formatMoney(amount, false);
 };

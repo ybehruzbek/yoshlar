@@ -1,19 +1,30 @@
-import { DashboardLayout } from "../../components/layout/DashboardLayout";
+import { prisma } from "../../lib/prisma";
+import { DebtorsClient, DebtorItem } from "./DebtorsClient";
 
-export default function DebtorsPage() {
-  return (
-    <DashboardLayout title="Qarzdorlar">
-      <div className="card">
-        <div className="card-head">
-          <div>
-            <div className="card-title">Qarzdorlar ro'yxati</div>
-            <div className="card-sub">Ushbu sahifa tez kunda to'liq ishga tushadi</div>
-          </div>
-        </div>
-        <div style={{ padding: "40px", textAlign: "center", color: "var(--text-secondary)" }}>
-          Qarzdorlar ro'yxati va ularni boshqarish vositalari shu yerda joylashadi.
-        </div>
-      </div>
-    </DashboardLayout>
-  );
+export const forceDynamic = "force-dynamic";
+
+export default async function DebtorsPage() {
+  const loans = await prisma.loan.findMany({
+    include: {
+      debtor: true
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
+  });
+
+  const debtorsData: DebtorItem[] = loans.map(loan => ({
+    id: loan.debtor.id, // Fixed: use debtor id, not loan id
+    fish: loan.debtor.fish,
+    telefon: loan.debtor.telefon,
+    loanType: loan.loanType,
+    qarzSummasi: loan.qarzSummasi,
+    muddatOtganSumma: loan.muddatOtganSumma,
+    status: loan.status,
+    riskScore: loan.riskScore,
+    photo: loan.debtor.photo
+  }));
+
+
+  return <DebtorsClient initialDebtors={debtorsData} totalCount={debtorsData.length} />;
 }
