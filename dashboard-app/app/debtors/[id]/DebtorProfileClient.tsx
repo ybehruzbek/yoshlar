@@ -12,15 +12,21 @@ import {
 import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/utils/format";
 
+const UZ_MONTHS = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktyabr", "noyabr", "dekabr"];
+
 const SafeDate = ({ date, format }: { date: string | Date | null; format?: "short" | "full" }) => {
   const [formatted, setFormatted] = useState<string>("");
   useEffect(() => {
     if (!date) return;
     const d = new Date(date);
+    if (isNaN(d.getTime())) return;
+    const day = d.getDate();
+    const month = UZ_MONTHS[d.getMonth()];
+    const year = d.getFullYear();
     if (format === "full") {
-      setFormatted(d.toLocaleDateString('uz-UZ', { year: 'numeric', month: 'long', day: 'numeric' }));
+      setFormatted(`${year}-yil ${day}-${month}`);
     } else {
-      setFormatted(d.toLocaleDateString('uz-UZ'));
+      setFormatted(`${String(day).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${year}`);
     }
   }, [date, format]);
   return <>{formatted || "—"}</>;
@@ -57,47 +63,68 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
           <button className="icon-btn-row"><DotsThree size={20} weight="bold" /></button>
         </div>
 
-        {/* Hero */}
-        <div className="dp-hero">
-          <div className="dp-hero-left">
-            <div className="dp-avatar">
-              {debtor.photo ? <img src={debtor.photo} alt="" /> : debtor.fish.charAt(0)}
-            </div>
-            <div className="dp-hero-info">
-              <h1 className="dp-name">{debtor.fish}</h1>
-              <div className="dp-meta-row">
-                {debtor.pasport && <span><IdentificationCard size={15} /> {debtor.pasport}</span>}
-                {debtor.jshshir && <span><ShieldCheck size={15} /> {debtor.jshshir}</span>}
-                <span><Phone size={15} /> {debtor.telefon || "Kiritilmagan"}</span>
+        {/* ── Person Card + Finance Summary ── */}
+        <div className="dp-hero-grid">
+          {/* Shaxsiy ma'lumotlar */}
+          <div className="dp-person-card">
+            <div className="dp-person-top">
+              <div className="dp-avatar">
+                {debtor.photo ? <img src={debtor.photo} alt="" /> : debtor.fish.charAt(0)}
               </div>
-              {debtor.manzil && (
-                <div className="dp-meta-row">
-                  <span><MapPin size={15} /> {debtor.manzil}</span>
+              <div>
+                <h1 className="dp-name">{debtor.fish}</h1>
+                {debtor.tugilganSana && (
+                  <div className="dp-birthdate"><Calendar size={14} /> <SafeDate date={debtor.tugilganSana} format="full" /></div>
+                )}
+              </div>
+            </div>
+
+            <div className="dp-details-grid">
+              {debtor.pasport && (
+                <div className="dp-detail">
+                  <div className="dp-detail-label">Pasport</div>
+                  <div className="dp-detail-val">{debtor.pasport}</div>
                 </div>
               )}
-              {debtor.tugilganSana && (
-                <div className="dp-meta-row">
-                  <span><Calendar size={15} /> <SafeDate date={debtor.tugilganSana} format="full" /></span>
+              {debtor.jshshir && (
+                <div className="dp-detail">
+                  <div className="dp-detail-label">JShShIR</div>
+                  <div className="dp-detail-val">{debtor.jshshir}</div>
+                </div>
+              )}
+              <div className="dp-detail">
+                <div className="dp-detail-label">Telefon</div>
+                <div className="dp-detail-val">{debtor.telefon || "Kiritilmagan"}</div>
+              </div>
+              {debtor.manzil && (
+                <div className="dp-detail dp-detail-full">
+                  <div className="dp-detail-label">Manzil</div>
+                  <div className="dp-detail-val">{debtor.manzil}</div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Summary Stats */}
-          <div className="dp-summary">
-            <div className="dp-sum-item">
-              <div className="dp-sum-label">Jami qarz</div>
-              <div className="dp-sum-val">{formatMoney(totalLoan)}</div>
+          {/* Moliyaviy xulosa */}
+          <div className="dp-finance-card">
+            <div className="dp-fin-item">
+              <div className="dp-fin-label">Jami qarz</div>
+              <div className="dp-fin-val">{formatMoney(totalLoan)}</div>
             </div>
-            <div className="dp-sum-divider" />
-            <div className="dp-sum-item">
-              <div className="dp-sum-label">To'langan</div>
-              <div className="dp-sum-val" style={{ color: 'var(--green)' }}>{formatMoney(totalPaid)}</div>
+            <div className="dp-fin-item">
+              <div className="dp-fin-label">To&apos;langan</div>
+              <div className="dp-fin-val dp-fin-green">{formatMoney(totalPaid)}</div>
             </div>
-            <div className="dp-sum-divider" />
-            <div className="dp-sum-item">
-              <div className="dp-sum-label">Kechikkan</div>
-              <div className="dp-sum-val" style={{ color: totalOverdue > 0 ? 'var(--red)' : 'inherit' }}>{formatMoney(totalOverdue)}</div>
+            <div className="dp-fin-item">
+              <div className="dp-fin-label">Kechikkan summa</div>
+              <div className={`dp-fin-val ${totalOverdue > 0 ? 'dp-fin-red' : ''}`}>{formatMoney(totalOverdue)}</div>
+            </div>
+            <div className="dp-fin-item">
+              <div className="dp-fin-label">Xavf darajasi</div>
+              <div className="dp-fin-risk">
+                <div className="dp-risk-mini-bar"><div className="dp-risk-mini-fill" style={{ width: `${avgRisk}%`, background: avgRisk > 70 ? 'var(--red)' : avgRisk > 40 ? 'var(--yellow)' : 'var(--green)' }} /></div>
+                <span style={{ color: avgRisk > 70 ? 'var(--red)' : 'inherit' }}>{avgRisk}%</span>
+              </div>
             </div>
           </div>
         </div>
@@ -226,16 +253,7 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
               </div>
             </div>
 
-            <div className="dp-side-card">
-              <h3>Xavf tahlili</h3>
-              <div className="dp-risk-meter">
-                <div className="dp-risk-fill" style={{ width: `${avgRisk}%`, background: avgRisk > 70 ? 'var(--red)' : avgRisk > 40 ? 'var(--yellow)' : 'var(--green)' }} />
-              </div>
-              <div className="dp-risk-row"><span>Xavf darajasi</span><strong style={{ color: avgRisk > 70 ? 'var(--red)' : 'inherit' }}>{avgRisk}%</strong></div>
-              <p className="dp-risk-desc">
-                {avgRisk > 70 ? "Yuqori xavf. Zudlik bilan chora ko'ring." : avgRisk > 40 ? "O'rtacha xavf. Monitoring davom ettirilsin." : "Past xavf. Holat barqaror."}
-              </p>
-            </div>
+
 
             {/* Quick info */}
             <div className="dp-side-card">
@@ -253,86 +271,122 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
 
       <style jsx>{`
         .dp { max-width: 1200px; margin: 0 auto; padding-bottom: 80px; }
-        .dp-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .dp-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
         .dp-back { display: flex; align-items: center; gap: 8px; background: none; border: none; color: var(--text-secondary); font-weight: 600; cursor: pointer; font-size: 14px; }
         .dp-back:hover { color: var(--text-primary); }
 
-        .dp-hero { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 28px 32px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
-        .dp-hero-left { display: flex; align-items: flex-start; gap: 24px; flex: 1; min-width: 300px; }
-        .dp-avatar { width: 90px; height: 90px; border-radius: 24px; background: var(--bg-sidebar); border: 3px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700; color: var(--accent); flex-shrink: 0; overflow: hidden; }
+        /* ── Hero Grid (2 cards) ── */
+        .dp-hero-grid {
+          display: grid;
+          grid-template-columns: 1.4fr 1fr;
+          gap: 24px;
+          margin-bottom: 32px;
+        }
+        .dp-person-card {
+          background: var(--bg-card); border: 1px solid var(--border);
+          border-radius: 24px; padding: 32px;
+        }
+        .dp-person-top { display: flex; align-items: center; gap: 24px; margin-bottom: 28px; }
+        .dp-avatar {
+          width: 80px; height: 80px; border-radius: 22px;
+          background: var(--bg-sidebar); border: 3px solid var(--border);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 32px; font-weight: 700; color: var(--accent);
+          flex-shrink: 0; overflow: hidden;
+        }
         .dp-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .dp-name { font-size: 22px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.3px; }
-        .dp-meta-row { display: flex; flex-wrap: wrap; gap: 16px; color: var(--text-secondary); font-size: 13px; margin-bottom: 4px; }
-        .dp-meta-row span { display: flex; align-items: center; gap: 6px; }
-        
-        .dp-summary { display: flex; align-items: center; gap: 20px; background: var(--bg-sidebar); padding: 16px 24px; border-radius: 16px; border: 1px solid var(--border); }
-        .dp-sum-label { font-size: 11px; color: var(--text-tertiary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-        .dp-sum-val { font-size: 17px; font-weight: 800; white-space: nowrap; }
-        .dp-sum-divider { width: 1px; height: 36px; background: var(--border); }
+        .dp-name { font-size: 22px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.3px; }
+        .dp-birthdate { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-tertiary); }
 
-        .dp-grid { display: grid; grid-template-columns: 1fr 300px; gap: 24px; }
+        .dp-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .dp-detail-full { grid-column: 1 / -1; }
+        .dp-detail-label { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+        .dp-detail-val { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 
-        .dp-tabs { display: flex; gap: 6px; margin-bottom: 20px; background: var(--bg-card); padding: 5px; border-radius: 14px; border: 1px solid var(--border); width: fit-content; }
-        .dp-tab { display: flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 10px; border: none; background: none; color: var(--text-secondary); font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+        .dp-finance-card {
+          background: var(--bg-card); border: 1px solid var(--border);
+          border-radius: 24px; padding: 32px;
+          display: flex; flex-direction: column; justify-content: center; gap: 24px;
+        }
+        .dp-fin-label { font-size: 12px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 6px; }
+        .dp-fin-val { font-size: 20px; font-weight: 800; }
+        .dp-fin-green { color: var(--green); }
+        .dp-fin-red { color: var(--red); }
+        .dp-fin-risk { display: flex; align-items: center; gap: 12px; }
+        .dp-fin-risk span { font-size: 16px; font-weight: 800; }
+        .dp-risk-mini-bar { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+        .dp-risk-mini-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+
+        /* ── Grid ── */
+        .dp-grid { display: grid; grid-template-columns: 1fr 320px; gap: 32px; }
+
+        /* ── Tabs ── */
+        .dp-tabs { display: flex; gap: 6px; margin-bottom: 28px; background: var(--bg-card); padding: 6px; border-radius: 14px; border: 1px solid var(--border); width: fit-content; }
+        .dp-tab { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 10px; border: none; background: none; color: var(--text-secondary); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; }
         .dp-tab.active { background: var(--text-primary); color: var(--bg); }
-        .dp-tab-count { background: rgba(var(--accent-rgb, 0.15)); padding: 1px 7px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .dp-tab-count { background: rgba(var(--accent-rgb, 0.15)); padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
 
-        .dp-loan-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 16px; overflow: hidden; }
-        .dp-loan-head { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .dp-loan-type { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
-        .dp-loan-date { font-size: 12px; color: var(--text-tertiary); }
-        .dp-loan-body { padding: 20px; }
-        .dp-loan-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px; }
-        .dp-ls label { display: block; font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
-        .dp-ls span { font-weight: 700; font-size: 14px; }
+        /* ── Loan Cards ── */
+        .dp-loan-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; margin-bottom: 24px; overflow: hidden; }
+        .dp-loan-head { padding: 20px 28px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .dp-loan-type { font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+        .dp-loan-date { font-size: 13px; color: var(--text-tertiary); }
+        .dp-loan-body { padding: 28px; }
+        .dp-loan-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 24px; }
+        .dp-ls label { display: block; font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+        .dp-ls span { font-weight: 700; font-size: 15px; }
 
-        .dp-progress-wrap { margin-bottom: 12px; }
-        .dp-progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
-        .dp-progress-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.6s ease; }
-        .dp-progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-tertiary); margin-top: 6px; font-weight: 500; }
+        .dp-progress-wrap { margin-bottom: 16px; }
+        .dp-progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+        .dp-progress-fill { height: 100%; background: var(--green); border-radius: 4px; transition: width 0.6s ease; }
+        .dp-progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-tertiary); margin-top: 8px; font-weight: 500; }
 
-        .dp-loan-extra { font-size: 12px; color: var(--text-tertiary); padding-top: 8px; border-top: 1px solid var(--border); }
+        .dp-loan-extra { font-size: 13px; color: var(--text-tertiary); padding-top: 12px; border-top: 1px solid var(--border); margin-top: 4px; }
 
-        .dp-payments { border-top: 1px solid var(--border); padding: 16px 20px; }
-        .dp-payments-title { font-size: 12px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
-        .dp-payment-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
+        /* ── Payments ── */
+        .dp-payments { border-top: 1px solid var(--border); padding: 20px 28px; }
+        .dp-payments-title { font-size: 12px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+        .dp-payment-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
         .dp-payment-row + .dp-payment-row { border-top: 1px solid var(--border); }
-        .dp-pay-left { display: flex; align-items: center; gap: 10px; }
+        .dp-pay-left { display: flex; align-items: center; gap: 12px; }
         .dp-pay-amount { font-weight: 700; font-size: 14px; }
-        .dp-pay-meta { font-size: 11px; color: var(--text-tertiary); }
+        .dp-pay-meta { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
 
-        .dp-side-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
-        .dp-side-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 16px; }
-        .dp-actions { display: flex; flex-direction: column; gap: 8px; }
-        .dp-actions button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-sidebar); color: var(--text-primary); font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; text-align: left; }
+        /* ── Side Cards ── */
+        .dp-side-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; margin-bottom: 20px; }
+        .dp-side-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 20px; }
+        .dp-actions { display: flex; flex-direction: column; gap: 10px; }
+        .dp-actions button { width: 100%; display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-sidebar); color: var(--text-primary); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; text-align: left; }
         .dp-actions button:hover { background: var(--bg-hover); border-color: var(--text-tertiary); }
 
-        .dp-risk-meter { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
-        .dp-risk-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
-        .dp-risk-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; }
-        .dp-risk-desc { font-size: 12px; color: var(--text-tertiary); margin-top: 10px; line-height: 1.5; }
+        .dp-risk-meter { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 14px; }
+        .dp-risk-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+        .dp-risk-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; }
+        .dp-risk-desc { font-size: 13px; color: var(--text-tertiary); margin-top: 14px; line-height: 1.6; }
 
-        .dp-info-rows { display: flex; flex-direction: column; gap: 10px; }
+        .dp-info-rows { display: flex; flex-direction: column; gap: 14px; }
         .dp-info-rows > div { display: flex; justify-content: space-between; font-size: 13px; }
         .dp-info-rows span { color: var(--text-tertiary); }
         .dp-info-rows strong { font-weight: 600; }
 
-        .dp-notes { padding: 4px 0; }
-        .dp-note-add { margin-bottom: 20px; }
-        .dp-note-add textarea { width: 100%; height: 80px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-sidebar); padding: 14px; font-family: inherit; font-size: 13px; resize: none; margin-bottom: 10px; }
-        .dp-btn-primary { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 10px; border: none; background: var(--accent); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
-        .dp-note-item { padding: 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-sidebar); margin-bottom: 10px; }
-        .dp-note-date { font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px; }
-        .dp-note-text { font-size: 13px; line-height: 1.5; }
-        .dp-empty { text-align: center; padding: 40px; color: var(--text-tertiary); font-size: 14px; }
-        .dp-docs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .dp-doc-add { border: 2px dashed var(--border); border-radius: 14px; padding: 28px; display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--text-tertiary); cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+        /* ── Notes ── */
+        .dp-notes { padding: 8px 0; }
+        .dp-note-add { margin-bottom: 24px; }
+        .dp-note-add textarea { width: 100%; height: 90px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-sidebar); padding: 16px; font-family: inherit; font-size: 14px; resize: none; margin-bottom: 12px; color: var(--text-primary); }
+        .dp-btn-primary { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 12px; border: none; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .dp-note-item { padding: 18px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-sidebar); margin-bottom: 14px; }
+        .dp-note-date { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; }
+        .dp-note-text { font-size: 14px; line-height: 1.6; }
+        .dp-empty { text-align: center; padding: 48px; color: var(--text-tertiary); font-size: 14px; }
+
+        /* ── Docs ── */
+        .dp-docs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .dp-doc-add { border: 2px dashed var(--border); border-radius: 16px; padding: 36px; display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--text-tertiary); cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
         .dp-doc-add:hover { border-color: var(--accent); color: var(--accent); }
 
         @media (max-width: 900px) {
+          .dp-hero-grid { grid-template-columns: 1fr; }
           .dp-grid { grid-template-columns: 1fr; }
-          .dp-hero { flex-direction: column; }
-          .dp-summary { width: 100%; justify-content: space-around; }
         }
       `}</style>
     </DashboardLayout>
