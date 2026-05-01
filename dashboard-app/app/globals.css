@@ -123,18 +123,31 @@ body {
   z-index: 100;
 }
 
-.sidebar-logo { padding: 24px 24px 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.sidebar-logo { 
+  padding: 26px 20px 24px; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  gap: 16px; 
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
 .logo-img {
-  max-width: 140px;
+  max-width: 130px;
   height: auto;
   object-fit: contain;
 }
 .sidebar-logo-text {
-  font-size: 13px;
+  font-size: 10.5px;
   font-weight: 700;
-  color: var(--text-tertiary);
-  letter-spacing: 0.5px;
+  color: var(--accent);
+  background: var(--accent-light);
+  padding: 6px 14px;
+  border-radius: 20px;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
+  border: 1px solid rgba(0, 113, 227, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.05);
 }
 
 .sidebar-nav { flex: 1; padding: 4px 12px; overflow-y: auto; }
