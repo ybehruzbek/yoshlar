@@ -160,50 +160,93 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
                 {debtor.loans.map((loan: any) => {
                   const paid = loan.payments.reduce((s: number, p: any) => s + p.summa, 0);
                   const progress = loan.qarzSummasi > 0 ? Math.min((paid / loan.qarzSummasi) * 100, 100) : 0;
+                  const qoldiq = loan.qarzSummasi - paid;
                   return (
                     <div key={loan.id} className="dp-loan-card">
+                      {/* Header */}
                       <div className="dp-loan-head">
-                        <div>
-                          <div className="dp-loan-type">{loan.loanType === '20_yil' ? '20 yillik uy-joy' : '7 yillik uy-joy'}</div>
-                          <div className="dp-loan-date">
-                            Shartnoma: <SafeDate date={loan.shartnomaSana} />
-                            {loan.reestrRaqam && <> · Reestr: {loan.reestrRaqam}</>}
-                          </div>
+                        <div className="dp-loan-head-left">
+                          <span className={`dp-loan-type-badge ${loan.loanType === '20_yil' ? 'type-20' : 'type-7'}`}>
+                            {loan.loanType === '20_yil' ? '20 yillik' : '7 yillik'}
+                          </span>
+                          <span className="dp-loan-title">Uy-joy shartnomasi</span>
                         </div>
                         {getStatusBadge(loan.status)}
                       </div>
 
+                      {/* Stats */}
                       <div className="dp-loan-body">
                         <div className="dp-loan-stats">
-                          <div className="dp-ls"><label>Shartnoma summasi</label><span>{formatMoney(loan.qarzSummasi)}</span></div>
-                          <div className="dp-ls"><label>To&apos;langan</label><span style={{ color: 'var(--green)' }}>{formatMoney(paid)}</span></div>
-                          <div className="dp-ls"><label>Muddati o&apos;tgan</label><span style={{ color: loan.muddatOtganSumma > 0 ? 'var(--red)' : 'inherit' }}>{formatMoney(loan.muddatOtganSumma)}</span></div>
-                          <div className="dp-ls"><label>Oylik to&apos;lov</label><span>{formatMoney(loan.oylikTolov || 0)}</span></div>
+                          <div className="dp-ls">
+                            <label>Shartnoma summasi</label>
+                            <span>{formatMoney(loan.qarzSummasi)}</span>
+                          </div>
+                          <div className="dp-ls">
+                            <label>Muddati o&apos;tgan</label>
+                            <span className={loan.muddatOtganSumma > 0 ? 'dp-val-red' : ''}>{formatMoney(loan.muddatOtganSumma)}</span>
+                          </div>
+                          <div className="dp-ls">
+                            <label>To&apos;langan</label>
+                            <span className={paid > 0 ? 'dp-val-green' : 'dp-val-muted'}>{formatMoney(paid)}</span>
+                          </div>
+                          <div className="dp-ls">
+                            <label>Qoldiq qarz</label>
+                            <span>{formatMoney(qoldiq > 0 ? qoldiq : 0)}</span>
+                          </div>
                         </div>
 
-                        {/* Progress bar */}
-                        <div className="dp-progress-wrap">
-                          <div className="dp-progress-bar">
-                            <div className="dp-progress-fill" style={{ width: `${progress}%` }} />
-                          </div>
-                          <div className="dp-progress-label">
-                            <span>To&apos;lash jarayoni</span>
-                            <span>{progress.toFixed(1)}%</span>
-                          </div>
-                        </div>
-
-                        {(loan.notarius || loan.holatSanasi) && (
-                          <div className="dp-loan-extra">
-                            {loan.notarius && <div>📝 Notarius: {loan.notarius}</div>}
-                            {loan.holatSanasi && <div>📅 Holat sanasi: <SafeDate date={loan.holatSanasi} format="full" /></div>}
+                        {/* Progress bar - faqat to'lov bo'lganda */}
+                        {progress > 0 && (
+                          <div className="dp-progress-wrap">
+                            <div className="dp-progress-bar">
+                              <div className="dp-progress-fill" style={{ width: `${progress}%` }} />
+                            </div>
+                            <div className="dp-progress-label">
+                              <span>To&apos;lash jarayoni</span>
+                              <span>{progress.toFixed(1)}%</span>
+                            </div>
                           </div>
                         )}
+
+                        {/* Ma'lumotlar jadvali */}
+                        <div className="dp-loan-info-table">
+                          {loan.shartnomaSana && (
+                            <div className="dp-info-row">
+                              <span className="dp-info-key">Shartnoma sanasi</span>
+                              <span className="dp-info-value"><SafeDate date={loan.shartnomaSana} format="full" /></span>
+                            </div>
+                          )}
+                          {loan.reestrRaqam && (
+                            <div className="dp-info-row">
+                              <span className="dp-info-key">Reestr raqami</span>
+                              <span className="dp-info-value dp-info-mono">{loan.reestrRaqam}</span>
+                            </div>
+                          )}
+                          {loan.oylikTolov > 0 && (
+                            <div className="dp-info-row">
+                              <span className="dp-info-key">Oylik to&apos;lov</span>
+                              <span className="dp-info-value">{formatMoney(loan.oylikTolov)}</span>
+                            </div>
+                          )}
+                          {loan.holatSanasi && (
+                            <div className="dp-info-row">
+                              <span className="dp-info-key">Holat sanasi</span>
+                              <span className="dp-info-value"><SafeDate date={loan.holatSanasi} format="full" /></span>
+                            </div>
+                          )}
+                          {loan.notarius && (
+                            <div className="dp-info-row dp-info-col">
+                              <span className="dp-info-key">Notarius</span>
+                              <span className="dp-info-value dp-info-small">{loan.notarius}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Payment history */}
                       {loan.payments.length > 0 && (
                         <div className="dp-payments">
-                          <div className="dp-payments-title">So'nggi to'lovlar</div>
+                          <div className="dp-payments-title">So&apos;nggi to&apos;lovlar</div>
                           {loan.payments.slice(0, 3).map((p: any) => (
                             <div key={p.id} className="dp-payment-row">
                               <div className="dp-pay-left">
@@ -339,20 +382,33 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
 
         /* ── Loan Cards ── */
         .dp-loan-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; margin-bottom: 24px; overflow: hidden; }
-        .dp-loan-head { padding: 20px 28px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .dp-loan-type { font-weight: 700; font-size: 16px; margin-bottom: 4px; }
-        .dp-loan-date { font-size: 13px; color: var(--text-tertiary); }
+        .dp-loan-head { padding: 18px 28px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .dp-loan-head-left { display: flex; align-items: center; gap: 12px; }
+        .dp-loan-type-badge { padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; }
+        .dp-loan-type-badge.type-20 { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+        .dp-loan-type-badge.type-7 { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+        .dp-loan-title { font-weight: 700; font-size: 15px; }
         .dp-loan-body { padding: 28px; }
         .dp-loan-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 24px; }
         .dp-ls label { display: block; font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
-        .dp-ls span { font-weight: 700; font-size: 15px; }
+        .dp-ls span { font-weight: 700; font-size: 16px; }
+        .dp-val-red { color: var(--red) !important; }
+        .dp-val-green { color: var(--green) !important; }
+        .dp-val-muted { color: var(--text-tertiary) !important; }
 
-        .dp-progress-wrap { margin-bottom: 16px; }
+        .dp-progress-wrap { margin-bottom: 24px; }
         .dp-progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
         .dp-progress-fill { height: 100%; background: var(--green); border-radius: 4px; transition: width 0.6s ease; }
         .dp-progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-tertiary); margin-top: 8px; font-weight: 500; }
 
-        .dp-loan-extra { font-size: 13px; color: var(--text-tertiary); padding-top: 14px; border-top: 1px solid var(--border); margin-top: 8px; display: flex; flex-direction: column; gap: 6px; line-height: 1.5; }
+        /* Info Table */
+        .dp-loan-info-table { border-top: 1px solid var(--border); padding-top: 20px; display: flex; flex-direction: column; gap: 14px; }
+        .dp-info-row { display: flex; align-items: baseline; justify-content: space-between; }
+        .dp-info-row.dp-info-col { flex-direction: column; gap: 6px; }
+        .dp-info-key { font-size: 13px; color: var(--text-tertiary); font-weight: 500; flex-shrink: 0; }
+        .dp-info-value { font-size: 13px; font-weight: 600; color: var(--text-primary); text-align: right; }
+        .dp-info-value.dp-info-mono { font-family: 'SF Mono', 'Menlo', monospace; font-size: 12px; letter-spacing: 0.3px; word-break: break-all; }
+        .dp-info-value.dp-info-small { font-size: 12px; font-weight: 500; color: var(--text-secondary); line-height: 1.6; text-align: left; }
 
         /* ── Payments ── */
         .dp-payments { border-top: 1px solid var(--border); padding: 20px 28px; }
