@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   ChartBar, Users, CreditCard, FileText, Scales, CalendarBlank,
-  ChartLineUp, Target, Gavel
+  ChartLineUp, Target
 } from "@phosphor-icons/react";
 import { getSidebarStats } from "../../lib/actions/stats";
 
@@ -60,7 +61,7 @@ export function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-logo">
         <div className="logo-badge">
-          <div className="logo-icon"><Gavel size={22} weight="fill" /></div>
+          <Image src="/logo.png" alt="Yoshlar Ittifoqi" width={40} height={40} className="logo-img" />
           <div>
             <div className="logo-title">Yoshlar Ittifoqi</div>
             <div className="logo-sub">Qarz Monitoring</div>
