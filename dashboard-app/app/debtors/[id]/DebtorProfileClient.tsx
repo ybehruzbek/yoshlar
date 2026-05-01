@@ -234,12 +234,26 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
                               <span className="dp-info-value"><SafeDate date={loan.holatSanasi} format="full" /></span>
                             </div>
                           )}
-                          {loan.notarius && (
-                            <div className="dp-info-row dp-info-col">
-                              <span className="dp-info-key">Notarius</span>
-                              <span className="dp-info-value dp-info-small">{loan.notarius}</span>
-                            </div>
-                          )}
+                          {loan.notarius && (() => {
+                            // Aqlli ajratish: "...notariusi Ism1 ...notariusi Ism2" → 2 ta
+                            const parts = loan.notarius
+                              .split(/(?=Toshkent shahar)/gi)
+                              .map((s: string) => s.trim())
+                              .filter((s: string) => s.length > 5);
+                            return (
+                              <div className="dp-info-row dp-info-col">
+                                <span className="dp-info-key">Notarius{parts.length > 1 ? 'lar' : ''}</span>
+                                <div className="dp-notarius-list">
+                                  {parts.map((n: string, i: number) => (
+                                    <div key={i} className="dp-notarius-item">
+                                      <span className="dp-notarius-num">{i + 1}</span>
+                                      <span>{n}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
 
@@ -410,6 +424,20 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
         .dp-info-value.dp-info-mono { font-family: 'SF Mono', 'Menlo', monospace; font-size: 12px; letter-spacing: 0.3px; word-break: break-all; }
         .dp-info-value.dp-info-small { font-size: 12px; font-weight: 500; color: var(--text-secondary); line-height: 1.6; text-align: left; }
 
+        .dp-notarius-list { display: flex; flex-direction: column; gap: 10px; }
+        .dp-notarius-item {
+          display: flex; align-items: flex-start; gap: 10px;
+          padding: 12px 16px; border-radius: 12px;
+          background: var(--bg-sidebar); border: 1px solid var(--border);
+          font-size: 13px; line-height: 1.6; color: var(--text-secondary);
+        }
+        .dp-notarius-num {
+          flex-shrink: 0; width: 22px; height: 22px;
+          border-radius: 7px; background: var(--accent);
+          color: #fff; font-size: 11px; font-weight: 700;
+          display: flex; align-items: center; justify-content: center;
+          margin-top: 1px;
+        }
         /* ── Payments ── */
         .dp-payments { border-top: 1px solid var(--border); padding: 20px 28px; }
         .dp-payments-title { font-size: 12px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
