@@ -5,6 +5,8 @@
   --bg-card: #ffffff;
   --bg-sidebar: #fbfbfd;
   --bg-hover: #f5f5f7;
+  --bg-topbar: rgba(242,242,247,0.72);
+  --bg-stat: #ffffff;
   --border: rgba(0,0,0,0.05);
   --border-strong: rgba(0,0,0,0.08);
   --text-primary: #1d1d1f;
@@ -14,8 +16,11 @@
   --accent-light: rgba(0,113,227,0.06);
   --green: #30d158;
   --green-bg: rgba(48,209,88,0.08);
+  --green-text: #1a8f3c;
   --yellow: #ff9f0a;
   --yellow-bg: rgba(255,159,10,0.07);
+  --yellow-text: #b36b00;
+
   --red: #ff453a;
   --red-bg: rgba(255,69,58,0.06);
   --orange: #ff6723;
@@ -23,11 +28,19 @@
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
   --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
   --shadow-lg: 0 12px 40px rgba(0,0,0,0.08);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.03);
+  --shadow-card-hover: 0 12px 32px rgba(0, 0, 0, 0.08);
   --radius: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
   --radius-xs: 8px;
   --ease: cubic-bezier(.4,0,.2,1);
+
+  --tr-hover: rgba(0,0,0,0.015);
+  --bar-bank: #1d1d1f;
+  --bar-payme: #0071e3;
+
+
 
   /* Glassmorphism */
   --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.2) 100%);
@@ -35,6 +48,51 @@
   --glass-border-light: rgba(255, 255, 255, 0.6);
   --glass-blur: blur(40px) saturate(180%);
 }
+
+[data-theme='dark'] {
+  --bg: #000000;
+  --bg-card: #1c1c1e;
+  --bg-sidebar: #0a0a0a;
+  --bg-hover: #2c2c2e;
+  --bg-topbar: rgba(28,28,30,0.8);
+  --bg-stat: #1c1c1e;
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.12);
+  --text-primary: #ffffff;
+  --text-secondary: #8e8e93;
+  --text-tertiary: #636366;
+  --accent: #0a84ff;
+  --accent-light: rgba(10,132,255,0.15);
+  --green: #32d74b;
+  --green-bg: rgba(50,215,75,0.1);
+  --green-text: #32d74b;
+  --yellow: #ffd60a;
+  --yellow-bg: rgba(255,214,10,0.1);
+  --yellow-text: #ffd60a;
+
+  --red: #ff453a;
+  --red-bg: rgba(255,69,58,0.1);
+  --orange: #ff9f0a;
+  
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.6);
+  --shadow-card: 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-card-hover: 0 12px 40px rgba(0,0,0,0.6);
+
+  /* Glassmorphism Dark */
+  --glass-bg: linear-gradient(135deg, rgba(28, 28, 30, 0.6) 0%, rgba(28, 28, 30, 0.3) 100%);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-light: rgba(255, 255, 255, 0.15);
+
+  --tr-hover: rgba(255,255,255,0.03);
+  --bar-bank: #ffffff;
+  --bar-payme: #0a84ff;
+}
+
+
+
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -72,8 +130,9 @@ body {
   background: var(--text-primary);
   border-radius: 13px;
   display: flex; align-items: center; justify-content: center;
-  color: #fff;
+  color: var(--bg);
   flex-shrink: 0;
+
 }
 .logo-title { font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.3px; }
 .logo-sub { font-size: 11.5px; color: var(--text-secondary); font-weight: 500; margin-top: 2px; }
@@ -93,13 +152,15 @@ body {
   margin-bottom: 2px;
 }
 .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
-.nav-item.active { background: var(--text-primary); color: #fff; font-weight: 600; }
+.nav-item.active { background: var(--text-primary); color: var(--bg); font-weight: 600; }
+
 .nav-icon { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; }
 .nav-badge {
-  margin-left: auto; background: var(--red); color: #fff;
+  margin-left: auto; background: var(--red); color: var(--bg);
   font-size: 11px; font-weight: 700; padding: 2px 8px;
   border-radius: 20px; min-width: 22px; text-align: center;
 }
+
 .nav-badge.yellow { background: var(--yellow); }
 
 .sidebar-footer { padding: 12px; border-top: 1px solid var(--border); }
@@ -123,8 +184,9 @@ body {
 /* ═══════════ TOPBAR ═══════════ */
 .topbar {
   height: 68px;
-  background: rgba(242,242,247,0.72);
+  background: var(--bg-topbar);
   backdrop-filter: saturate(180%) blur(20px);
+
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid var(--border);
   display: flex; align-items: center;
@@ -142,10 +204,11 @@ body {
   cursor: pointer; border: none; font-family: inherit;
   transition: all 0.2s var(--ease);
 }
-.btn-primary { background: var(--text-primary); color: #fff; }
-.btn-primary:hover { background: #333; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-primary { background: var(--text-primary); color: var(--bg); }
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .btn-ghost { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-strong); }
 .btn-ghost:hover { background: var(--bg-hover); }
+
 .notif-btn {
   width: 40px; height: 40px; border-radius: 50%;
   background: var(--bg-card); border: 1px solid var(--border-strong);
@@ -167,16 +230,16 @@ body {
 .welcome-section { margin-bottom: 32px; animation: fadeIn 0.6s ease; }
 .welcome-title {
   font-size: 32px; font-weight: 800; letter-spacing: -1px;
-  background: linear-gradient(135deg, #1d1d1f 0%, #515154 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
 }
+
 .welcome-sub { font-size: 15px; color: var(--text-secondary); margin-top: 6px; font-weight: 500; }
 
 /* ═══════════ ALERT ═══════════ */
 .alert-bar {
-  background: linear-gradient(135deg, rgba(255,159,10,0.08) 0%, rgba(255,159,10,0.03) 100%);
+  background: var(--yellow-bg);
   border: 1px solid rgba(255,159,10,0.12);
+
   border-radius: var(--radius-md); padding: 16px 20px;
   display: flex; align-items: center; gap: 14px;
   margin-bottom: 28px; font-size: 14px; font-weight: 500;
@@ -205,15 +268,16 @@ body {
 }
 
 .stat-card {
-  background: #ffffff;
-  border: 1px solid rgba(0,0,0,0.05);
+  background: var(--bg-stat);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 32px 24px;
   position: relative;
   overflow: hidden;
   transition: all 0.4s var(--ease);
   animation: fadeUp 0.5s ease both;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-card);
+
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -221,9 +285,10 @@ body {
 
 .stat-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
-  border-color: rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--border-strong);
 }
+
 
 .stat-accent {
   position: absolute; top: 0; left: 0; right: 0; height: 3px;
@@ -312,19 +377,21 @@ body {
 }
 
 .overview-card {
-  background: #ffffff;
-  border: 1px solid rgba(0,0,0,0.05);
+  background: var(--bg-stat);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 20px 24px;
   transition: all 0.3s var(--ease);
   animation: fadeUp 0.5s ease 0.28s both;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--shadow-xs);
 }
 
 .overview-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
 }
+
 
 .overview-label {
   font-size: 11px;
@@ -409,8 +476,9 @@ body {
   transition: all 0.4s cubic-bezier(.34,1.56,.64,1);
   cursor: pointer; position: relative;
 }
-.bar.bank { background: #1d1d1f; }
-.bar.payme { background: #0071e3; }
+.bar.bank { background: var(--bar-bank); }
+.bar.payme { background: var(--bar-payme); }
+
 .bar:hover { filter: brightness(1.2); transform: scale(1.05); z-index: 2000; }
 
 
@@ -483,7 +551,8 @@ td {
   border-top: 1px solid var(--border); vertical-align: middle;
 }
 tr { transition: background 0.15s; }
-tr:hover td { background: rgba(0,0,0,0.015); }
+tr:hover td { background: var(--tr-hover); }
+
 
 .debtor-name { font-weight: 600; font-size: 14px; }
 .debtor-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
@@ -494,8 +563,9 @@ tr:hover td { background: rgba(0,0,0,0.015); }
   border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap;
 }
 .badge-red { background: var(--red-bg); color: var(--red); }
-.badge-yellow { background: var(--yellow-bg); color: #b36b00; }
-.badge-green { background: var(--green-bg); color: #1a8f3c; }
+.badge-yellow { background: var(--yellow-bg); color: var(--yellow-text); }
+.badge-green { background: var(--green-bg); color: var(--green-text); }
+
 .badge-blue { background: var(--accent-light); color: var(--accent); }
 .badge-gray { background: var(--bg); color: var(--text-secondary); }
 

@@ -58,7 +58,8 @@ function DonutChart({ data, total }: { data: DashboardProps["statusColors"], tot
     <div className="donut-wrap">
       <div className="donut-container" style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: "rotate(-90deg)" }}>
-          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f0f0f2" strokeWidth={18} />
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--bg-hover)" strokeWidth={18} />
+
           {segments.map((s, i) => (
             <circle key={i} cx={cx} cy={cy} r={r} fill="none"
               stroke={s.color} strokeWidth={18}
