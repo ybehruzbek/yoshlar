@@ -61,6 +61,7 @@ function getCellText(row: ExcelJS.Row, col: number): string {
  * Summani o'qish — har xil formatlarni qo'llab-quvvatlaydi:
  * - number: 52050500
  * - Yevropa formati string: "48.091.168,45" (nuqta = minglik, vergul = kasr)
+ * - Xatoli format: "45.930.894.30" (nuqta vergul o'rniga)
  * - Formula: { formula: "...", result: 43667824.68 }
  */
 function parseAmount(val: any): number {
@@ -76,19 +77,30 @@ function parseAmount(val: any): number {
 
   // String formatni tozalash
   let str = String(val).trim();
-
-  // Faqat raqam, nuqta, vergul va minus qoldirish
   str = str.replace(/[^\d.,-]/g, "");
-
   if (!str) return 0;
 
-  // Yevropa formati: "48.091.168,45" — nuqta=minglik, vergul=kasr
-  if (str.includes(".") && str.includes(",")) {
-    // Nuqtalarni olib tashlash (minglik ajratuvchi), vergulni nuqtaga aylantirish
+  // Nuqtalarni sanash
+  const dots = (str.match(/\./g) || []).length;
+  const commas = (str.match(/,/g) || []).length;
+
+  if (dots > 1 && commas === 1) {
+    // "48.091.168,45" — standart Yevropa formati
     str = str.replace(/\./g, "").replace(",", ".");
-  }
-  // Faqat vergul bor (kasr): "1234,56" 
-  else if (str.includes(",") && !str.includes(".")) {
+  } else if (dots > 1 && commas === 0) {
+    // "45.930.894.30" — xatoli format, oxirgi nuqta kasr
+    const lastDot = str.lastIndexOf(".");
+    const afterLastDot = str.substring(lastDot + 1);
+    // Agar oxirgi nuqtadan keyin 1-2 raqam bo'lsa — kasr
+    if (afterLastDot.length <= 2) {
+      const intPart = str.substring(0, lastDot).replace(/\./g, "");
+      str = intPart + "." + afterLastDot;
+    } else {
+      // hammasi minglik ajratuvchi
+      str = str.replace(/\./g, "");
+    }
+  } else if (commas === 1 && dots === 0) {
+    // "1234,56" — vergul kasr
     str = str.replace(",", ".");
   }
 
@@ -132,8 +144,20 @@ export async function previewDebtorsExcel(formData: FormData) {
     if (!file) throw new Error("Fayl topilmadi");
 
     const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    
+    // ExcelJS.readFile diskdan o'qiganda rasmlarni to'liq oladi
+    // load() bufferdan o'qiganda rasmlar kelmaydi
+    const tmpDir = path.join(process.cwd(), "tmp");
+    await fs.ensureDir(tmpDir);
+    const tmpPath = path.join(tmpDir, `import_${Date.now()}.xlsx`);
+    await fs.writeFile(tmpPath, buffer);
+
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(Buffer.from(bytes));
+    await workbook.xlsx.readFile(tmpPath);
+    
+    // Vaqtincha faylni o'chirish
+    await fs.remove(tmpPath).catch(() => {});
     
     const worksheet = workbook.worksheets[0];
     if (!worksheet) throw new Error("Varaq topilmadi");
@@ -141,23 +165,26 @@ export async function previewDebtorsExcel(formData: FormData) {
     const data: any[] = [];
     const errors: { row: number; msg: string }[] = [];
 
-    // Rasmlarni olish
+    // Rasmlarni olish — faqat readFile bilan ishlaydi (load bilan rasm buferlari yo'q)
+    // Server action'da FormData orqali kelgan faylni vaqtincha diskka yozamiz
     const images = worksheet.getImages();
-    const imageMap = new Map<number, string>(); // row -> base64 or path
+    const imageMap = new Map<number, string>(); // row -> base64
 
-    // Rasmlarni row bo'yicha mapping qilish
     for (const img of images) {
-      if (img.range && img.range.tl) {
-        const rowNum = Math.floor(img.range.tl.nativeRow) + 1; // 0-indexed -> 1-indexed
-        try {
-          const media = workbook.getImage(Number(img.imageId));
-          if (media && media.buffer) {
+      try {
+        const tl = img.range?.tl;
+        if (!tl) continue;
+        const rowNum = Math.floor(tl.nativeRow ?? tl.row ?? 0) + 1;
+        
+        const media = workbook.getImage(Number(img.imageId));
+        if (media && media.buffer) {
+          const buf = Buffer.from(media.buffer as ArrayBuffer);
+          if (buf.length > 100) { // Skip tiny/broken images
             const ext = media.extension || "jpeg";
-            const base64 = Buffer.from(media.buffer as ArrayBuffer).toString("base64");
-            imageMap.set(rowNum, `data:image/${ext};base64,${base64}`);
+            imageMap.set(rowNum, `data:image/${ext};base64,${buf.toString("base64")}`);
           }
-        } catch { /* skip broken images */ }
-      }
+        }
+      } catch { /* skip broken images */ }
     }
 
     // Row 1 = Sarlavha (merged), Row 2 = Ustun nomlari, Row 3+ = Ma'lumot
@@ -217,6 +244,7 @@ export async function previewDebtorsExcel(formData: FormData) {
           telefon,
           ogohlantirishXati,
           sudMalumot,
+          photoBase64: photoBase64 || null,
           hasPhoto: !!photoBase64,
         });
       } catch (err: any) {
@@ -259,7 +287,7 @@ export async function commitDebtorsImport(data: any[], loanType: "20_yil" | "7_y
           fish, telefon, manzil, pasport, jshshir, tugilganSana,
           qarzSummasi, qarzMatnda, notarius, reestrRaqam, 
           muddatOtganSumma, shartnomaSana, holatSanasi,
-          tartibRaqam, ogohlantirishXati, sudMalumot
+          tartibRaqam, ogohlantirishXati, sudMalumot, photoBase64
         } = item;
 
         // ── 1. Qarzdorni topish yoki yaratish ──
@@ -299,6 +327,26 @@ export async function commitDebtorsImport(data: any[], loanType: "20_yil" | "7_y
               tugilganSana: tugilganSana ? new Date(tugilganSana) : null,
             }
           });
+        }
+
+        // ── Rasmni saqlash ──
+        if (photoBase64 && photoBase64.startsWith("data:image/")) {
+          try {
+            const matches = photoBase64.match(/^data:image\/(\w+);base64,(.+)$/);
+            if (matches) {
+              const ext = matches[1];
+              const imgBuffer = Buffer.from(matches[2], "base64");
+              const fileName = `${jshshir || debtor.id}.${ext}`;
+              const filePath = path.join(uploadDir, fileName);
+              await fs.writeFile(filePath, imgBuffer);
+              
+              // Debtor foto maydonini yangilash
+              await prisma.debtor.update({
+                where: { id: debtor.id },
+                data: { photo: `/uploads/debtors/${fileName}` }
+              });
+            }
+          } catch { /* rasm saqlanmasa ham davom etamiz */ }
         }
 
         // ── 2. Qarzni topish yoki yaratish ──
