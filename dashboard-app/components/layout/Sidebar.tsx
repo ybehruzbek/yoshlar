@@ -61,6 +61,7 @@ export function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-logo">
         <Image src="/logo.png" alt="Yoshlar Ittifoqi" width={180} height={50} className="logo-img" priority />
+        <div className="sidebar-logo-text">Monitoring Tizimi</div>
       </div>
       
       <nav className="sidebar-nav">
