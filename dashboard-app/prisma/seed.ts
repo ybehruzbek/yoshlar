@@ -1,7 +1,15 @@
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import Database from "better-sqlite3";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient({ datasourceUrl: process.env.DATABASE_URL });
+const url = process.env.DATABASE_URL || "file:./dev.db";
+const db = new Database(url);
+const adapter = new PrismaBetterSqlite3({ url });
+const prisma = new PrismaClient({ adapter });
+
+
 
 async function main() {
   const hash = await bcrypt.hash("admin123", 10);

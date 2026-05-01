@@ -281,10 +281,11 @@ body {
 .change-down { background: var(--red-bg); color: var(--red); }
 
 .stat-value {
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 800;
-  letter-spacing: -1.5px;
+  letter-spacing: -1px;
   line-height: 1.1;
+
   margin-bottom: 4px;
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
@@ -335,9 +336,10 @@ body {
 }
 
 .overview-value {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
+
   color: var(--text-primary);
 }
 
@@ -357,11 +359,15 @@ body {
   border-radius: var(--radius); padding: 24px;
   transition: all 0.3s var(--ease);
   animation: fadeUp 0.5s ease 0.35s both;
+  position: relative;
+  overflow: visible;
 }
 .card:hover { box-shadow: var(--shadow-md); border-color: transparent; }
 .card-head {
   display: flex; align-items: center;
   justify-content: space-between; margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
 }
 .card-title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
 .card-sub { font-size: 12px; color: var(--text-secondary); margin-top: 3px; font-weight: 500; }
@@ -369,6 +375,8 @@ body {
 .tabs {
   display: flex; gap: 4px;
   background: var(--bg); border-radius: 10px; padding: 3px;
+  position: relative;
+  z-index: 2;
 }
 .tab {
   padding: 7px 16px; border-radius: 8px;
@@ -383,11 +391,14 @@ body {
 .bar-chart {
   display: flex; align-items: flex-end; gap: 8px;
   height: 240px; padding-bottom: 28px;
+  overflow: visible;
+  position: relative;
 }
 .bar-col {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; gap: 12px; height: 100%;
   justify-content: flex-end;
+  position: relative;
 }
 .bar-group {
   display: flex; align-items: flex-end; gap: 4px;
@@ -400,23 +411,26 @@ body {
 }
 .bar.bank { background: #1d1d1f; }
 .bar.payme { background: #0071e3; }
-.bar:hover { filter: brightness(1.2); transform: scale(1.05); }
+.bar:hover { filter: brightness(1.2); transform: scale(1.05); z-index: 2000; }
+
 
 .bar-tooltip {
-  position: absolute; top: -36px; left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  background: rgba(29, 29, 31, 0.9);
-  backdrop-filter: blur(8px);
+  position: absolute; bottom: 100%; left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: #1d1d1f;
   color: #fff;
-  padding: 6px 12px; border-radius: 8px;
-  font-size: 11px; font-weight: 700;
+  padding: 10px 16px; border-radius: 12px;
   opacity: 0; pointer-events: none;
   transition: all 0.2s var(--ease);
-  white-space: nowrap;
-  z-index: 100;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  text-align: center;
+  z-index: 1000;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  margin-bottom: 5px;
+  min-width: 140px;
 }
 .bar:hover .bar-tooltip { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+
 
 .card-legend {
   display: flex; gap: 16px; margin-bottom: 20px;
