@@ -13,6 +13,9 @@ export default async function DebtorProfilePage({ params }: PageProps) {
     where: { id },
     include: {
       loans: {
+        include: {
+          payments: { orderBy: { tolovSana: "desc" } },
+        },
         orderBy: { shartnomaSana: "desc" }
       },
       notes: {
@@ -35,6 +38,11 @@ export default async function DebtorProfilePage({ params }: PageProps) {
       holatSanasi: loan.holatSanasi?.toISOString() || null,
       createdAt: loan.createdAt.toISOString(),
       updatedAt: loan.updatedAt.toISOString(),
+      payments: loan.payments.map(p => ({
+        ...p,
+        tolovSana: p.tolovSana.toISOString(),
+        createdAt: p.createdAt.toISOString(),
+      })),
     })),
     notes: debtor.notes.map(note => ({
       ...note,
