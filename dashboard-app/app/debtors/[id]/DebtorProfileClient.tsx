@@ -71,7 +71,7 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
               <div className="dp-avatar">
                 {debtor.photo ? <img src={debtor.photo} alt="" /> : debtor.fish.charAt(0)}
               </div>
-              <div>
+              <div className="dp-person-info">
                 <h1 className="dp-name">{debtor.fish}</h1>
                 {debtor.tugilganSana && (
                   <div className="dp-birthdate"><Calendar size={14} /> <SafeDate date={debtor.tugilganSana} format="full" /></div>
@@ -107,23 +107,31 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
 
           {/* Moliyaviy xulosa */}
           <div className="dp-finance-card">
-            <div className="dp-fin-item">
-              <div className="dp-fin-label">Jami qarz</div>
-              <div className="dp-fin-val">{formatMoney(totalLoan)}</div>
+            <div className="dp-fin-row">
+              <div className="dp-fin-item">
+                <div className="dp-fin-label">Jami qarz</div>
+                <div className="dp-fin-val">{formatMoney(totalLoan)}</div>
+              </div>
+              <div className="dp-fin-item">
+                <div className="dp-fin-label">To&apos;langan</div>
+                <div className="dp-fin-val dp-fin-green">{formatMoney(totalPaid)}</div>
+              </div>
             </div>
-            <div className="dp-fin-item">
-              <div className="dp-fin-label">To&apos;langan</div>
-              <div className="dp-fin-val dp-fin-green">{formatMoney(totalPaid)}</div>
+            <div className="dp-fin-row">
+              <div className="dp-fin-item">
+                <div className="dp-fin-label">Kechikkan</div>
+                <div className={`dp-fin-val ${totalOverdue > 0 ? 'dp-fin-red' : ''}`}>{formatMoney(totalOverdue)}</div>
+              </div>
+              <div className="dp-fin-item">
+                <div className="dp-fin-label">Qoldiq qarz</div>
+                <div className="dp-fin-val">{formatMoney(totalLoan - totalPaid)}</div>
+              </div>
             </div>
-            <div className="dp-fin-item">
-              <div className="dp-fin-label">Kechikkan summa</div>
-              <div className={`dp-fin-val ${totalOverdue > 0 ? 'dp-fin-red' : ''}`}>{formatMoney(totalOverdue)}</div>
-            </div>
-            <div className="dp-fin-item">
+            <div className="dp-fin-risk-section">
               <div className="dp-fin-label">Xavf darajasi</div>
               <div className="dp-fin-risk">
                 <div className="dp-risk-mini-bar"><div className="dp-risk-mini-fill" style={{ width: `${avgRisk}%`, background: avgRisk > 70 ? 'var(--red)' : avgRisk > 40 ? 'var(--yellow)' : 'var(--green)' }} /></div>
-                <span style={{ color: avgRisk > 70 ? 'var(--red)' : 'inherit' }}>{avgRisk}%</span>
+                <span style={{ color: avgRisk > 70 ? 'var(--red)' : 'inherit', fontWeight: 800, fontSize: 16 }}>{avgRisk}%</span>
               </div>
             </div>
           </div>
@@ -159,7 +167,7 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
                           <div className="dp-loan-type">{loan.loanType === '20_yil' ? '20 yillik uy-joy' : '7 yillik uy-joy'}</div>
                           <div className="dp-loan-date">
                             Shartnoma: <SafeDate date={loan.shartnomaSana} />
-                            {loan.reestrRaqam && <> · #{loan.reestrRaqam}</>}
+                            {loan.reestrRaqam && <> · Reestr: {loan.reestrRaqam}</>}
                           </div>
                         </div>
                         {getStatusBadge(loan.status)}
@@ -168,9 +176,9 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
                       <div className="dp-loan-body">
                         <div className="dp-loan-stats">
                           <div className="dp-ls"><label>Shartnoma summasi</label><span>{formatMoney(loan.qarzSummasi)}</span></div>
-                          <div className="dp-ls"><label>To'langan</label><span style={{ color: 'var(--green)' }}>{formatMoney(paid)}</span></div>
-                          <div className="dp-ls"><label>Muddati o'tgan</label><span style={{ color: loan.muddatOtganSumma > 0 ? 'var(--red)' : 'inherit' }}>{formatMoney(loan.muddatOtganSumma)}</span></div>
-                          <div className="dp-ls"><label>Oylik to'lov</label><span>{formatMoney(loan.oylikTolov || 0)}</span></div>
+                          <div className="dp-ls"><label>To&apos;langan</label><span style={{ color: 'var(--green)' }}>{formatMoney(paid)}</span></div>
+                          <div className="dp-ls"><label>Muddati o&apos;tgan</label><span style={{ color: loan.muddatOtganSumma > 0 ? 'var(--red)' : 'inherit' }}>{formatMoney(loan.muddatOtganSumma)}</span></div>
+                          <div className="dp-ls"><label>Oylik to&apos;lov</label><span>{formatMoney(loan.oylikTolov || 0)}</span></div>
                         </div>
 
                         {/* Progress bar */}
@@ -179,14 +187,15 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
                             <div className="dp-progress-fill" style={{ width: `${progress}%` }} />
                           </div>
                           <div className="dp-progress-label">
-                            <span>To'lash jarayoni</span>
+                            <span>To&apos;lash jarayoni</span>
                             <span>{progress.toFixed(1)}%</span>
                           </div>
                         </div>
 
-                        {loan.notarius && (
+                        {(loan.notarius || loan.holatSanasi) && (
                           <div className="dp-loan-extra">
-                            <span>Notarius: {loan.notarius}</span>
+                            {loan.notarius && <div>📝 Notarius: {loan.notarius}</div>}
+                            {loan.holatSanasi && <div>📅 Holat sanasi: <SafeDate date={loan.holatSanasi} format="full" /></div>}
                           </div>
                         )}
                       </div>
@@ -278,44 +287,46 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
         /* ── Hero Grid (2 cards) ── */
         .dp-hero-grid {
           display: grid;
-          grid-template-columns: 1.4fr 1fr;
+          grid-template-columns: 1.2fr 1fr;
           gap: 24px;
           margin-bottom: 32px;
         }
         .dp-person-card {
           background: var(--bg-card); border: 1px solid var(--border);
-          border-radius: 24px; padding: 32px;
+          border-radius: 24px; padding: 36px;
         }
-        .dp-person-top { display: flex; align-items: center; gap: 24px; margin-bottom: 28px; }
+        .dp-person-top { display: flex; align-items: center; gap: 28px; margin-bottom: 32px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
         .dp-avatar {
-          width: 80px; height: 80px; border-radius: 22px;
+          width: 120px; height: 120px; border-radius: 30px;
           background: var(--bg-sidebar); border: 3px solid var(--border);
           display: flex; align-items: center; justify-content: center;
-          font-size: 32px; font-weight: 700; color: var(--accent);
+          font-size: 44px; font-weight: 700; color: var(--accent);
           flex-shrink: 0; overflow: hidden;
         }
         .dp-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .dp-name { font-size: 22px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.3px; }
-        .dp-birthdate { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-tertiary); }
+        .dp-person-info { flex: 1; }
+        .dp-name { font-size: 24px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.3px; }
+        .dp-birthdate { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-tertiary); }
 
-        .dp-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .dp-details-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
         .dp-detail-full { grid-column: 1 / -1; }
-        .dp-detail-label { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
-        .dp-detail-val { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+        .dp-detail-label { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .dp-detail-val { font-size: 14px; font-weight: 600; color: var(--text-primary); word-break: break-word; }
 
         .dp-finance-card {
           background: var(--bg-card); border: 1px solid var(--border);
-          border-radius: 24px; padding: 32px;
-          display: flex; flex-direction: column; justify-content: center; gap: 24px;
+          border-radius: 24px; padding: 36px;
+          display: flex; flex-direction: column; justify-content: center; gap: 8px;
         }
-        .dp-fin-label { font-size: 12px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 6px; }
-        .dp-fin-val { font-size: 20px; font-weight: 800; }
+        .dp-fin-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 16px; }
+        .dp-fin-label { font-size: 12px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.4px; }
+        .dp-fin-val { font-size: 22px; font-weight: 800; }
         .dp-fin-green { color: var(--green); }
         .dp-fin-red { color: var(--red); }
-        .dp-fin-risk { display: flex; align-items: center; gap: 12px; }
-        .dp-fin-risk span { font-size: 16px; font-weight: 800; }
-        .dp-risk-mini-bar { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
-        .dp-risk-mini-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+        .dp-fin-risk-section { padding-top: 16px; border-top: 1px solid var(--border); }
+        .dp-fin-risk { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
+        .dp-risk-mini-bar { flex: 1; height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; }
+        .dp-risk-mini-fill { height: 100%; border-radius: 5px; transition: width 0.6s ease; }
 
         /* ── Grid ── */
         .dp-grid { display: grid; grid-template-columns: 1fr 320px; gap: 32px; }
@@ -341,7 +352,7 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
         .dp-progress-fill { height: 100%; background: var(--green); border-radius: 4px; transition: width 0.6s ease; }
         .dp-progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-tertiary); margin-top: 8px; font-weight: 500; }
 
-        .dp-loan-extra { font-size: 13px; color: var(--text-tertiary); padding-top: 12px; border-top: 1px solid var(--border); margin-top: 4px; }
+        .dp-loan-extra { font-size: 13px; color: var(--text-tertiary); padding-top: 14px; border-top: 1px solid var(--border); margin-top: 8px; display: flex; flex-direction: column; gap: 6px; line-height: 1.5; }
 
         /* ── Payments ── */
         .dp-payments { border-top: 1px solid var(--border); padding: 20px 28px; }
