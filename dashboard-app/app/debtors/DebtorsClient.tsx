@@ -88,8 +88,8 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
     if (confirm(`Haqiqatan ham "${name}" ni va barcha bog'liq ma'lumotlarni o'chirib yubormoqchimisiz?`)) {
       const res = await deleteDebtor(id);
       if (res.success) {
-        alert("Qarzdor muvaffaqiyatli o'chirildi");
         setActiveRowId(null);
+        router.refresh();
       } else {
         alert("Xatolik: " + res.error);
       }
@@ -388,8 +388,8 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
                   </div>
                 </td>
                 <td>
-                  <span className={`type-tag ${d.loanType === "20_yil" ? "tag-purple" : "tag-blue"}`}>
-                    {d.loanType === "20_yil" ? "20 yillik" : "7 yillik"}
+                  <span className={`type-tag ${d.loanType === "20_yil" ? "tag-purple" : d.loanType === "7_yil" ? "tag-blue" : "tag-green"}`}>
+                    {d.loanType === "20_yil" ? "20 yillik" : d.loanType === "7_yil" ? "7 yillik" : "Aralash"}
                   </span>
                 </td>
                 <td>

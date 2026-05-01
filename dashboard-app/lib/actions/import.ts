@@ -85,12 +85,26 @@ export async function commitDebtorsImport(data: any[], loanType: "20_yil" | "7_y
       try {
         const { fish, telefon, manzil, pasport, jshshir, qarzSummasi, qarzMatnda, notarius, reestrRaqam, muddatOtganSumma } = item;
 
-        // Upsert Debtor
-        const debtor = await prisma.debtor.upsert({
-          where: { jshshir: jshshir || "N/A-" + Math.random(), pasport: pasport || "N/A-" + Math.random() },
-          update: { fish, telefon, manzil },
-          create: { fish, telefon, manzil, pasport, jshshir }
-        });
+        // Find debtor by jshshir or pasport
+        let debtor = null;
+        if (jshshir) {
+          debtor = await prisma.debtor.findUnique({ where: { jshshir } });
+        }
+        if (!debtor && pasport) {
+          debtor = await prisma.debtor.findUnique({ where: { pasport } });
+        }
+
+        if (debtor) {
+          debtor = await prisma.debtor.update({
+            where: { id: debtor.id },
+            data: { fish, telefon, manzil }
+          });
+        } else {
+          debtor = await prisma.debtor.create({
+            data: { fish, telefon, manzil, pasport: pasport || null, jshshir: jshshir || null }
+          });
+        }
+
 
         // Find existing loan
         const existingLoan = await prisma.loan.findFirst({

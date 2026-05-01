@@ -9,7 +9,6 @@ interface PageProps {
 export default async function DebtorProfilePage({ params }: PageProps) {
   const { id } = await params;
 
-  console.log("DEBUG: Loading profile for ID:", id);
   const debtor = await prisma.debtor.findUnique({
     where: { id },
     include: {
@@ -22,10 +21,7 @@ export default async function DebtorProfilePage({ params }: PageProps) {
     }
   });
 
-  console.log("DEBUG: Debtor found:", debtor ? "YES" : "NO");
-
   if (!debtor) {
-    console.log("DEBUG: Triggering notFound() for ID:", id);
     notFound();
   }
 

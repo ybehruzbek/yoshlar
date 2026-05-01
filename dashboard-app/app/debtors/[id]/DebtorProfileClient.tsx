@@ -177,7 +177,7 @@ export function DebtorProfileClient({ debtor }: DebtorProfileClientProps) {
                       debtor.notes.map((note: any) => (
                         <div key={note.id} className="note-item">
                           <div className="note-date"><SafeDate date={note.createdAt} /></div>
-                          <div className="note-content">{note.content}</div>
+                          <div className="note-content">{note.matn}</div>
                         </div>
                       ))
                     )}
