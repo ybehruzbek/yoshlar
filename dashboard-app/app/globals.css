@@ -693,27 +693,32 @@ tr:hover td { background: var(--tr-hover); }
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  overflow: visible;
+  overflow-x: auto;
+  overflow-y: visible;
   box-shadow: var(--shadow-sm);
+  position: relative;
 }
 
-.modern-table { width: 100%; border-collapse: collapse; }
+.modern-table { width: 100%; border-collapse: collapse; table-layout: auto; }
 .modern-table th {
   background: var(--bg-sidebar);
-  padding: 16px 24px;
+  padding: 14px 16px;
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
   color: var(--text-tertiary);
   border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  text-align: left;
 }
 .modern-table td {
-  padding: 18px 24px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--border);
   font-size: 14px;
   color: var(--text-primary);
 }
 .modern-table tr:last-child td { border-bottom: none; }
+.text-green { color: var(--green); }
 
 .fade-in-row {
   animation: fadeInRow 0.5s ease both;
@@ -1011,4 +1016,156 @@ tr:hover td { background: var(--tr-hover); }
 .btn-delete-all:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ── Infinite Scroll & Enhanced States ── */
+.loaded-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-bottom: 12px;
+  padding: 0 4px;
+  font-weight: 500;
+}
+.loading-dot-text {
+  color: var(--accent);
+  font-weight: 600;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.load-more-trigger {
+  padding: 32px 0;
+  display: flex;
+  justify-content: center;
+}
+.loading-spinner-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-tertiary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.empty-state-modern {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px;
+  text-align: center;
+}
+.empty-icon-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 24px;
+  background: var(--bg-sidebar);
+  border: 2px dashed var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  margin-bottom: 20px;
+}
+.empty-state-modern h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+.empty-state-modern p {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  margin-bottom: 20px;
+  max-width: 320px;
+}
+.empty-reset-btn {
+  padding: 10px 24px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.empty-reset-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.end-of-list {
+  text-align: center;
+  padding: 24px 0 16px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+
+.search-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+.search-clear:hover { color: var(--text-primary); }
+
+.search-wrap {
+  position: relative;
+}
+
+.preview-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(52, 199, 89, 0.08);
+  border: 1px solid rgba(52, 199, 89, 0.2);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.preview-table-wrap {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.preview-more {
+  text-align: center;
+  padding: 12px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* ── Preview Stats ── */
+.preview-stat-chip {
+  padding: 6px 14px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
 }

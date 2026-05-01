@@ -1,35 +1,45 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ChartBar, Users, CreditCard, FileText, Scales, CalendarBlank,
   ChartLineUp, Target, Gavel
 } from "@phosphor-icons/react";
+import { getSidebarStats } from "../../lib/actions/stats";
 
-const NAV = [
-  { icon: ChartBar, label: "Dashboard", href: "/", badge: null },
-  { icon: Users, label: "Qarzdorlar", href: "/debtors", badge: "900" },
-  { icon: CreditCard, label: "To'lovlar", href: "/payments", badge: null },
-  { icon: FileText, label: "Hujjatlar", href: "/documents", badge: null },
-  { icon: Scales, label: "Sud bo'limi", href: "/court", badge: "12", badgeColor: "yellow" },
-  { icon: CalendarBlank, label: "Kalendar", href: "/calendar", badge: null },
-  { icon: ChartLineUp, label: "Hisobotlar", href: "/reports", badge: null },
-  { icon: Target, label: "KPI", href: "/kpi", badge: null },
+interface NavItemData {
+  icon: any;
+  label: string;
+  href: string;
+  badgeKey?: string;
+  badgeColor?: string;
+}
+
+const NAV: NavItemData[] = [
+  { icon: ChartBar, label: "Dashboard", href: "/" },
+  { icon: Users, label: "Qarzdorlar", href: "/debtors", badgeKey: "debtorCount" },
+  { icon: CreditCard, label: "To'lovlar", href: "/payments" },
+  { icon: FileText, label: "Hujjatlar", href: "/documents" },
+  { icon: Scales, label: "Sud bo'limi", href: "/court", badgeKey: "courtCount", badgeColor: "yellow" },
+  { icon: CalendarBlank, label: "Kalendar", href: "/calendar" },
+  { icon: ChartLineUp, label: "Hisobotlar", href: "/reports" },
+  { icon: Target, label: "KPI", href: "/kpi" },
 ];
 
-function NavItem({ item, currentPath }: { item: typeof NAV[0], currentPath: string }) {
+function NavItem({ item, currentPath, stats }: { item: NavItemData; currentPath: string; stats: Record<string, number> }) {
   const Icon = item.icon;
-  // Exact match for dashboard, partial match for subpages
   const isActive = item.href === "/" ? currentPath === item.href : currentPath.startsWith(item.href);
+  const badgeValue = item.badgeKey ? stats[item.badgeKey] : undefined;
   
   return (
     <Link href={item.href} className={`nav-item ${isActive ? "active" : ""}`} style={{ textDecoration: 'none' }}>
       <span className="nav-icon"><Icon size={20} weight={isActive ? "fill" : "regular"} /></span>
       {item.label}
-      {item.badge && (
-        <span className={`nav-badge ${"badgeColor" in item && item.badgeColor === "yellow" ? "yellow" : ""}`}>
-          {item.badge}
+      {badgeValue !== undefined && badgeValue > 0 && (
+        <span className={`nav-badge ${item.badgeColor === "yellow" ? "yellow" : ""}`}>
+          {badgeValue}
         </span>
       )}
     </Link>
@@ -38,6 +48,13 @@ function NavItem({ item, currentPath }: { item: typeof NAV[0], currentPath: stri
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [stats, setStats] = useState<Record<string, number>>({});
+  
+  useEffect(() => {
+    getSidebarStats().then(data => {
+      setStats(data as Record<string, number>);
+    });
+  }, [pathname]); // Refresh stats on navigation
   
   return (
     <aside className="sidebar">
@@ -53,13 +70,13 @@ export function Sidebar() {
       
       <nav className="sidebar-nav">
         <div className="nav-label">Asosiy</div>
-        {NAV.slice(0, 4).map(item => <NavItem key={item.label} item={item} currentPath={pathname || "/"} />)}
+        {NAV.slice(0, 4).map(item => <NavItem key={item.label} item={item} currentPath={pathname || "/"} stats={stats} />)}
         
         <div className="nav-label">Huquqiy</div>
-        {NAV.slice(4, 6).map(item => <NavItem key={item.label} item={item} currentPath={pathname || "/"} />)}
+        {NAV.slice(4, 6).map(item => <NavItem key={item.label} item={item} currentPath={pathname || "/"} stats={stats} />)}
         
         <div className="nav-label">Tahlil</div>
-        {NAV.slice(6).map(item => <NavItem key={item.label} item={item} currentPath={pathname || "/"} />)}
+        {NAV.slice(6).map(item => <NavItem key={item.label} item={item} currentPath={pathname || "/"} stats={stats} />)}
       </nav>
       
       <div className="sidebar-footer">
@@ -74,3 +91,4 @@ export function Sidebar() {
     </aside>
   );
 }
+

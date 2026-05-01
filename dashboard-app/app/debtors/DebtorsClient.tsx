@@ -1,31 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { 
-  MagnifyingGlass, 
-  Funnel, 
-  CaretDown, 
-  DotsThreeVertical,
-  User as UserIcon,
-  Phone,
-  Calendar,
-  CurrencyCircleDollar,
-  ArrowRight,
-  CheckCircle,
-  Clock,
-  Warning,
-  FilePlus,
-  FileText,
-  Bell,
-  FileArrowDown,
-  CloudArrowUp,
-  Trash,
-  PencilSimple
+  MagnifyingGlass, Funnel, CaretDown, DotsThreeVertical,
+  User as UserIcon, Phone, ArrowRight, CheckCircle, Clock, Warning,
+  FilePlus, FileText, Bell, FileArrowDown, CloudArrowUp, Trash, PencilSimple
 } from "@phosphor-icons/react";
 import * as XLSX from "xlsx";
 import { formatMoney } from "../../lib/utils/format";
 import { previewDebtorsExcel, commitDebtorsImport } from "../../lib/actions/import";
+import { fetchDebtorsPaginated } from "../../lib/actions/fetchDebtors";
 import { deleteDebtor, deleteAllDebtors } from "../../lib/actions/debtors";
 import { useRouter } from "next/navigation";
 
@@ -35,6 +20,7 @@ export interface DebtorItem {
   telefon: string | null;
   loanType: string;
   qarzSummasi: number;
+  tolanganSumma: number;
   muddatOtganSumma: number;
   status: string;
   riskScore: number;
@@ -48,9 +34,20 @@ interface DebtorsClientProps {
 
 export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps) {
   const router = useRouter();
+  
+  // Data & pagination
+  const [debtors, setDebtors] = useState<DebtorItem[]>(initialDebtors);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(initialDebtors.length >= 20);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Filters
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Barchasi");
   const [typeFilter, setTypeFilter] = useState("Barchasi");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  
+  // UI state
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -61,12 +58,76 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
   const [activeRowId, setActiveRowId] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const handleRowActionClick = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    setActiveRowId(activeRowId === id ? null : id);
-  };
+  // ── Debounce search ──
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(timer);
+  }, [search]);
 
+  // ── Reset & reload when filters change ──
+  useEffect(() => {
+    // Skip initial render
+    if (debouncedSearch === "" && statusFilter === "Barchasi" && typeFilter === "Barchasi") {
+      setDebtors(initialDebtors);
+      setPage(0);
+      setHasMore(initialDebtors.length >= 20);
+      return;
+    }
+    
+    setLoadingMore(true);
+    fetchDebtorsPaginated({
+      page: 0,
+      search: debouncedSearch,
+      status: statusFilter,
+      type: typeFilter,
+    }).then(res => {
+      setDebtors(res.items);
+      setPage(0);
+      setHasMore(res.hasMore);
+      setLoadingMore(false);
+    });
+  }, [debouncedSearch, statusFilter, typeFilter, initialDebtors]);
+
+  // ── Infinite Scroll: load more ──
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    const res = await fetchDebtorsPaginated({
+      page: nextPage,
+      search: debouncedSearch,
+      status: statusFilter,
+      type: typeFilter,
+    });
+    setDebtors(prev => {
+      // Deduplicate
+      const existingIds = new Set(prev.map(d => d.id));
+      const newItems = res.items.filter((d: DebtorItem) => !existingIds.has(d.id));
+      return [...prev, ...newItems];
+    });
+    setPage(nextPage);
+    setHasMore(res.hasMore);
+    setLoadingMore(false);
+  }, [page, hasMore, loadingMore, debouncedSearch, statusFilter, typeFilter]);
+
+  // ── IntersectionObserver for infinite scroll ──
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) loadMore();
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
+
+  // ── Close menus on outside click ──
   useEffect(() => {
     const handleClose = () => {
       setActiveRowId(null);
@@ -75,6 +136,12 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
     window.addEventListener('click', handleClose);
     return () => window.removeEventListener('click', handleClose);
   }, []);
+
+  // ── Handlers ──
+  const handleRowActionClick = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setActiveRowId(activeRowId === id ? null : id);
+  };
 
   const handleImportClick = () => {
     setIsActionMenuOpen(false);
@@ -85,30 +152,28 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (confirm(`Haqiqatan ham "${name}" ni va barcha bog'liq ma'lumotlarni o'chirib yubormoqchimisiz?`)) {
+    if (confirm(`Haqiqatan ham "${name}" ni o'chirib yubormoqchimisiz?`)) {
       const res = await deleteDebtor(id);
       if (res.success) {
+        setDebtors(prev => prev.filter(d => d.id !== id));
         setActiveRowId(null);
-        router.refresh();
       } else {
         alert("Xatolik: " + res.error);
       }
     }
   };
 
-  const handleViewProfile = (id: string) => {
-    router.push(`/debtors/${id}`);
-  };
+  const handleViewProfile = (id: string) => router.push(`/debtors/${id}`);
 
   const handleDeleteAll = async () => {
-    if (confirm("DIQQAT! Barcha qarzdorlarni va ularga tegishli barcha ma'lumotlarni (qarzlar, eslatmalar) butunlay o'chirib yubormoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.")) {
+    setIsActionMenuOpen(false);
+    if (confirm("DIQQAT! Barcha qarzdorlarni butunlay o'chirib yubormoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.")) {
       setIsLoading(true);
       const res = await deleteAllDebtors();
       setIsLoading(false);
-      
       if (res.success) {
-        alert("Barcha ma'lumotlar tozalandi");
-        setIsActionMenuOpen(false);
+        setDebtors([]);
+        setHasMore(false);
         router.refresh();
       } else {
         alert("Xatolik: " + res.error);
@@ -116,27 +181,21 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
     }
   };
 
-  const handleEdit = (id: string) => {
-    alert("Tez kunda: Tahrirlash imkoniyati qo'shiladi");
-  };
+  const handleEdit = () => alert("Tez kunda: Tahrirlash imkoniyati qo'shiladi");
 
   const downloadSample = () => {
     const title = loanTypeToImport === "20_yil" ? "Uy-joy qarzdorlik ro'yxati 20-yillik" : "Uy-joy qarzdorlik ro'yxati 7-yillik";
     const data = [
       [title],
-      [
-        "T/r.", "Rasmi", "Pasport bo'yicha manzili", "F.I.O.", "Pasport seriyasi va raqami", 
-        "Tug'ilgan vaqti", "JShShIR", "Olingan qarz summasi", "Olingan qarz summasi matnda", 
-        "Qarz shartnomasi tasdiqlangan sana", "Tasdiqlagan notarius", "Shartnoma reestr raqami", 
-        "Qarzdorlik holati sanasi", "Muddati o'tkan qarz summasi", "Muddati o'tkan qarz summasi matnda ", 
-        "Telefon raqami", "Ogohlantirish xati yuborilgan sana va raqami", "Sudga chiqarilganligi haqida ma'lumot"
-      ],
-      [
-        1, "", "Toshkent shahar, Uchtepa tumani", "KADIROV ODIL MURATOVICH", "AD1114901", 
-        "1990-01-01", "31602870171169", 68590000, "oltmish sakkiz million...", 
-        "2019-yil 20-mart", "Notarius Nomi", "201900043001468", 
-        "2025-yil 5-noyabr", 22577489, "yigirma ikki million...", "998901234567"
-      ]
+      ["T/r.", "Rasmi", "Pasport bo'yicha manzili", "F.I.O.", "Pasport seriyasi va raqami", 
+       "Tug'ilgan vaqti", "JShShIR", "Olingan qarz summasi", "Olingan qarz summasi matnda", 
+       "Qarz shartnomasi tasdiqlangan sana", "Tasdiqlagan notarius", "Shartnoma reestr raqami", 
+       "Qarzdorlik holati sanasi", "Muddati o'tkan qarz summasi", "Muddati o'tkan qarz summasi matnda ", 
+       "Telefon raqami", "Ogohlantirish xati yuborilgan sana va raqami", "Sudga chiqarilganligi haqida ma'lumot"],
+      [1, "", "Toshkent shahar", "KADIROV ODIL MURATOVICH", "AD1114901", 
+       "1990-01-01", "31602870171169", 68590000, "oltmish sakkiz million...", 
+       "2019-yil 20-mart", "Notarius Nomi", "201900043001468", 
+       "2025-yil 5-noyabr", 22577489, "yigirma ikki million...", "998901234567"]
     ];
     const ws = XLSX.utils.aoa_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -154,16 +213,10 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
     setIsLoading(true);
     const formData = new FormData();
     formData.append("file", selectedFile);
-    formData.append("loanType", loanTypeToImport);
-
     const result = await previewDebtorsExcel(formData);
     setIsLoading(false);
-
-    if (result.success) {
-      setPreviewData(result.data);
-    } else {
-      alert(`Xatolik yuz berdi: ${result.error}`);
-    }
+    if (result.success) setPreviewData(result.data);
+    else alert(`Xatolik: ${result.error}`);
   };
 
   const handleCommit = async () => {
@@ -171,45 +224,24 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
     setIsLoading(true);
     const result = await commitDebtorsImport(previewData, loanTypeToImport);
     setIsLoading(false);
-
     if (result.success) {
       setImportResult(result);
       setPreviewData(null);
       router.refresh();
-    } else {
-      alert(`Xatolik yuz berdi: ${result.error}`);
-    }
+    } else alert(`Xatolik: ${result.error}`);
   };
 
-  // Calculate summary stats
-  const stats = {
-    total: initialDebtors.length,
-    y20: initialDebtors.filter(d => d.loanType === '20_yil').length,
-    y7: initialDebtors.filter(d => d.loanType === '7_yil').length,
-    overdueCount: initialDebtors.filter(d => d.muddatOtganSumma > 0).length,
-    totalOverdue: initialDebtors.reduce((acc, d) => acc + d.muddatOtganSumma, 0),
-    highRisk: initialDebtors.filter(d => d.riskScore >= 80).length,
-    avgRisk: Math.round(initialDebtors.reduce((acc, d) => acc + d.riskScore, 0) / (initialDebtors.length || 1)),
-    courtCount: initialDebtors.filter(d => d.status === 'sudda').length,
-    paidCount: initialDebtors.filter(d => d.status === 'tolangan').length
-  };
-
-  const filteredDebtors = initialDebtors.filter(d => {
-    const matchesSearch = d.fish.toLowerCase().includes(search.toLowerCase()) || 
-                         (d.telefon && d.telefon.includes(search));
-    const matchesStatus = statusFilter === "Barchasi" || d.status.toLowerCase() === statusFilter.toLowerCase();
-    const matchesType = typeFilter === "Barchasi" || 
-                       (typeFilter === "20 yillik" && d.loanType === "20_yil") ||
-                       (typeFilter === "7 yillik" && d.loanType === "7_yil");
-    return matchesSearch && matchesStatus && matchesType;
-  });
+  // ── Stats (from loaded debtors + totalCount from server) ──
+  const overdueCount = debtors.filter(d => d.muddatOtganSumma > 0).length;
+  const totalOverdue = debtors.reduce((acc, d) => acc + d.muddatOtganSumma, 0);
+  const highRisk = debtors.filter(d => d.riskScore >= 80).length;
 
   const getStatusBadge = (status: string) => {
     switch(status.toLowerCase()) {
       case "faol": return <span className="badge badge-green">Faol</span>;
       case "kechikkan": return <span className="badge badge-red">Kechikkan</span>;
       case "sudda": return <span className="badge badge-yellow">Sudda</span>;
-      case "tolangan": return <span className="badge badge-blue">To'langan</span>;
+      case "tolangan": return <span className="badge badge-blue">To&apos;langan</span>;
       default: return <span className="badge badge-gray">{status}</span>;
     }
   };
@@ -222,81 +254,46 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
 
   return (
     <DashboardLayout title="Qarzdorlar">
+      {/* ── Header ── */}
       <div className="page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div className="header-info">
           <h2 className="section-title">Barcha qarzdorlar</h2>
-          <p className="section-sub">Baza ma&apos;lumotlari tahlili</p>
+          <p className="section-sub">{totalCount} ta qarzdor bazada</p>
         </div>
 
-        <div className="header-actions-wrap" style={{ display: 'flex', gap: 12 }}>
+        <div style={{ position: 'relative' }}>
           <button 
-            className="btn-delete-all" 
-            onClick={handleDeleteAll}
+            className="icon-btn-row" 
+            style={{ width: 44, height: 44, borderRadius: 12 }}
+            onClick={(e) => { e.stopPropagation(); setIsActionMenuOpen(!isActionMenuOpen); }}
             disabled={isLoading}
           >
-            <Trash size={18} weight="bold" /> Barchasini o'chirish
+            {isLoading ? <Clock size={24} className="spin" /> : <DotsThreeVertical size={24} weight="bold" />}
           </button>
 
-          <div style={{ position: 'relative' }}>
-            <button 
-              className="icon-btn-row" 
-              style={{ width: 44, height: 44, borderRadius: 12 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsActionMenuOpen(!isActionMenuOpen);
-              }}
-              disabled={isLoading}
-            >
-              {isLoading ? <Clock size={24} className="spin" /> : <DotsThreeVertical size={24} weight="bold" />}
-            </button>
-
-            {isActionMenuOpen && (
-              <div className="dropdown-menu-glass">
-                <div className="menu-item" onClick={() => setIsActionMenuOpen(false)}>
-                  <UserIcon size={18} /> Yangi qo&apos;shish
-                </div>
-                <div className="menu-item" onClick={handleImportClick}>
-                  <FilePlus size={18} /> Exceldan import
-                </div>
-
-                <div className="menu-divider" />
-                <div className="menu-item" onClick={() => setIsActionMenuOpen(false)}>
-                  <FileText size={18} /> Talabnomalar yaratish
-                </div>
-                <div className="menu-item" onClick={() => setIsActionMenuOpen(false)}>
-                  <Bell size={18} /> SMS xabarnoma
-                </div>
+          {isActionMenuOpen && (
+            <div className="dropdown-menu-glass" onClick={(e) => e.stopPropagation()}>
+              <div className="menu-item" onClick={() => setIsActionMenuOpen(false)}>
+                <UserIcon size={18} /> Yangi qo&apos;shish
               </div>
-            )}
-          </div>
+              <div className="menu-item" onClick={handleImportClick}>
+                <FilePlus size={18} /> Exceldan import
+              </div>
+              <div className="menu-divider" />
+              <div className="menu-item" onClick={() => setIsActionMenuOpen(false)}>
+                <FileText size={18} /> Talabnomalar yaratish
+              </div>
+              <div className="menu-item" onClick={() => setIsActionMenuOpen(false)}>
+                <Bell size={18} /> SMS xabarnoma
+              </div>
+              <div className="menu-divider" />
+              <div className="menu-item delete-item" onClick={handleDeleteAll}>
+                <Trash size={18} weight="bold" /> Barchasini o&apos;chirish
+              </div>
+            </div>
+          )}
         </div>
       </div>
-
-
-      {/* ── Summary Stats ── */}
-      <div className="stats-grid" style={{ marginBottom: 32 }}>
-        <div className="stat-card" style={{ padding: '24px 20px' }}>
-          <div className="stat-value" style={{ fontSize: 24 }}>{stats.total} ta</div>
-          <div className="stat-label">Jami qarzdorlar</div>
-          <div className="stat-footer">20 yillik: <strong>{stats.y20}</strong> · 7 yillik: <strong>{stats.y7}</strong></div>
-        </div>
-        <div className="stat-card" style={{ padding: '24px 20px' }}>
-          <div className="stat-value" style={{ fontSize: 24 }}>{stats.overdueCount} ta</div>
-          <div className="stat-label">Muddati o&apos;tganlar</div>
-          <div className="stat-footer">Jami qarz: <strong>{formatMoney(stats.totalOverdue)}</strong></div>
-        </div>
-        <div className="stat-card" style={{ padding: '24px 20px' }}>
-          <div className="stat-value" style={{ fontSize: 24, color: stats.highRisk > 0 ? 'var(--red)' : 'var(--text-primary)' }}>{stats.highRisk} ta</div>
-          <div className="stat-label">Yuqori xavf guruhi</div>
-          <div className="stat-footer">O&apos;rtacha xavf: <strong>{stats.avgRisk}%</strong></div>
-        </div>
-        <div className="stat-card" style={{ padding: '24px 20px' }}>
-          <div className="stat-value" style={{ fontSize: 24 }}>{stats.courtCount} ta</div>
-          <div className="stat-label">Huquqiy jarayonda</div>
-          <div className="stat-footer">MIB ga o&apos;tgan: <strong>0 ta</strong></div>
-        </div>
-      </div>
-
 
       {/* ── Filters ── */}
       <div className="filter-card">
@@ -304,11 +301,14 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
           <MagnifyingGlass size={18} className="search-icon" />
           <input 
             type="text" 
-            placeholder="Ism yoki telefon bo'yicha qidirish..." 
+            placeholder="Ism, telefon yoki JShShIR bo'yicha qidirish..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="search-input"
           />
+          {search && (
+            <button className="search-clear" onClick={() => setSearch("")}>×</button>
+          )}
         </div>
         
         <div className="filter-group">
@@ -337,11 +337,13 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
               <CaretDown size={14} className="select-caret" />
             </div>
           </div>
-
-          <button className="filter-btn-main">
-            <Funnel size={16} weight="bold" /> Filtrlash
-          </button>
         </div>
+      </div>
+
+      {/* ── Loaded count indicator ── */}
+      <div className="loaded-indicator">
+        <span>{debtors.length} / {totalCount} ta ko&apos;rsatilmoqda</span>
+        {loadingMore && <span className="loading-dot-text">Yuklanmoqda...</span>}
       </div>
 
       {/* ── Table ── */}
@@ -349,22 +351,23 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
         <table className="modern-table">
           <thead>
             <tr>
-              <th>F.I.O va Ma'lumot</th>
-              <th>Shartnoma turi</th>
+              <th>F.I.O va Ma&apos;lumot</th>
+              <th>Turi</th>
               <th>Jami qarz</th>
-              <th>Kechikkan summa</th>
+              <th>To&apos;langan</th>
+              <th>Kechikkan</th>
               <th>Holat</th>
               <th>Xavf</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {filteredDebtors.map((d, i) => (
+            {debtors.map((d, i) => (
               <tr 
                 key={d.id} 
                 className="fade-in-row"
                 style={{ 
-                  animationDelay: `${i * 0.05}s`,
+                  animationDelay: `${Math.min(i, 19) * 0.03}s`,
                   position: 'relative',
                   zIndex: activeRowId === d.id ? 100 : 1
                 }}
@@ -378,7 +381,6 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
                         d.fish.charAt(0)
                       )}
                     </div>
-
                     <div>
                       <div className="user-name-cell">{d.fish}</div>
                       <div className="user-sub-cell">
@@ -392,14 +394,9 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
                     {d.loanType === "20_yil" ? "20 yillik" : d.loanType === "7_yil" ? "7 yillik" : "Aralash"}
                   </span>
                 </td>
-                <td>
-                  <div className="amount-cell">{formatMoney(d.qarzSummasi)}</div>
-                </td>
-                <td>
-                  <div className={`amount-cell ${d.muddatOtganSumma > 0 ? "text-red" : ""}`}>
-                    {formatMoney(d.muddatOtganSumma)}
-                  </div>
-                </td>
+                <td><div className="amount-cell">{formatMoney(d.qarzSummasi)}</div></td>
+                <td><div className="amount-cell text-green">{formatMoney(d.tolanganSumma)}</div></td>
+                <td><div className={`amount-cell ${d.muddatOtganSumma > 0 ? "text-red" : ""}`}>{formatMoney(d.muddatOtganSumma)}</div></td>
                 <td>{getStatusBadge(d.status)}</td>
                 <td>
                   <div className="risk-indicator">
@@ -420,19 +417,15 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
                       <DotsThreeVertical size={18} weight="bold" />
                     </button>
                   </div>
-
                   {activeRowId === d.id && (
-                    <div className="dropdown-menu-glass" style={{ right: 40, top: 0, zIndex: 100 }}>
-                      <div className="menu-item" onClick={() => handleEdit(d.id)}>
+                    <div className="dropdown-menu-glass" style={{ right: 40, top: 0, zIndex: 100 }} onClick={(e) => e.stopPropagation()}>
+                      <div className="menu-item" onClick={() => handleEdit()}>
                         <PencilSimple size={18} /> Tahrirlash
                       </div>
                       <div className="menu-item" onClick={() => handleViewProfile(d.id)}>
                         <UserIcon size={18} /> Profilni ko&apos;rish
                       </div>
-                      <div 
-                        className="menu-item delete-item" 
-                        onClick={() => handleDelete(d.id, d.fish)}
-                      >
+                      <div className="menu-item delete-item" onClick={() => handleDelete(d.id, d.fish)}>
                         <Trash size={18} weight="bold" /> O&apos;chirish
                       </div>
                     </div>
@@ -442,15 +435,44 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
             ))}
           </tbody>
         </table>
-        {filteredDebtors.length === 0 && (
-          <div className="empty-state">
-            <UserIcon size={48} weight="light" />
+
+        {/* Infinite scroll trigger */}
+        {hasMore && (
+          <div ref={loadMoreRef} className="load-more-trigger">
+            <div className="loading-spinner-row">
+              <Clock size={20} className="spin" />
+              <span>Yana yuklanmoqda...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {debtors.length === 0 && !loadingMore && (
+          <div className="empty-state-modern">
+            <div className="empty-icon-wrap">
+              <UserIcon size={48} weight="light" />
+            </div>
             <h3>Qarzdorlar topilmadi</h3>
-            <p>Qidiruv shartlarini o&apos;zgartirib ko&apos;ring yoki yangi qarzdor qo&apos;shing</p>
+            <p>
+              {search || statusFilter !== "Barchasi" || typeFilter !== "Barchasi"
+                ? "Qidiruv shartlarini o'zgartirib ko'ring"
+                : "Yangi qarzdor qo'shing yoki Exceldan import qiling"}
+            </p>
+            {(search || statusFilter !== "Barchasi" || typeFilter !== "Barchasi") && (
+              <button className="empty-reset-btn" onClick={() => { setSearch(""); setStatusFilter("Barchasi"); setTypeFilter("Barchasi"); }}>
+                Filtrlarni tozalash
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* End of list */}
+        {!hasMore && debtors.length > 0 && (
+          <div className="end-of-list">
+            Barcha {debtors.length} ta qarzdor ko&apos;rsatildi
           </div>
         )}
       </div>
-
 
       {/* ── Import Modal ── */}
       {isImportModalOpen && (
@@ -460,28 +482,16 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
               <h3 className="modal-title">Exceldan ma&apos;lumot yuklash</h3>
               <button className="close-btn" onClick={() => { setIsImportModalOpen(false); setPreviewData(null); setImportResult(null); }}>×</button>
             </div>
-            
             <div className="modal-body">
               {!previewData && !importResult ? (
                 <>
                   <div className="type-selector-wrap">
                     <div className="selector-label">Shartnoma turi:</div>
                     <div className="selector-group">
-                      <button 
-                        className={`selector-btn ${loanTypeToImport === "20_yil" ? "active" : ""}`}
-                        onClick={() => setLoanTypeToImport("20_yil")}
-                      >
-                        20 yillik
-                      </button>
-                      <button 
-                        className={`selector-btn ${loanTypeToImport === "7_yil" ? "active" : ""}`}
-                        onClick={() => setLoanTypeToImport("7_yil")}
-                      >
-                        7 yillik
-                      </button>
+                      <button className={`selector-btn ${loanTypeToImport === "20_yil" ? "active" : ""}`} onClick={() => setLoanTypeToImport("20_yil")}>20 yillik</button>
+                      <button className={`selector-btn ${loanTypeToImport === "7_yil" ? "active" : ""}`} onClick={() => setLoanTypeToImport("7_yil")}>7 yillik</button>
                     </div>
                   </div>
-
                   <div className="sample-box" onClick={downloadSample}>
                     <FileArrowDown size={24} weight="bold" />
                     <div>
@@ -489,15 +499,8 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
                       <div className="sample-sub">Fayl strukturasi bilan tanishing</div>
                     </div>
                   </div>
-
                   <div className="upload-zone" onClick={() => fileInputRef.current?.click()}>
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      style={{ display: 'none' }} 
-                      accept=".xlsx, .xls"
-                      onChange={handleFileSelect}
-                    />
+                    <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".xlsx, .xls" onChange={handleFileSelect} />
                     {selectedFile ? (
                       <div className="file-info-box">
                         <FileText size={32} weight="fill" color="var(--accent)" />
@@ -505,70 +508,50 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
                         <div className="file-size-info">{(selectedFile.size / 1024).toFixed(1)} KB</div>
                       </div>
                     ) : (
-                      <>
-                        <CloudArrowUp size={40} weight="light" />
-                        <p>Faylni tanlang yoki shu yerga olib keling</p>
-                      </>
+                      <><CloudArrowUp size={40} weight="light" /><p>Faylni tanlang yoki shu yerga olib keling</p></>
                     )}
                   </div>
-
-                  <button 
-                    className="btn-primary-full" 
-                    disabled={!selectedFile || isLoading}
-                    onClick={handlePreview}
-                  >
-                    {isLoading ? (
-                      <> <Clock size={18} className="spin" /> O&apos;qilmoqda... </>
-                    ) : (
-                      <> <MagnifyingGlass size={18} weight="bold" /> Ma&apos;lumotlarni tekshirish </>
-                    )}
+                  <button className="btn-primary-full" disabled={!selectedFile || isLoading} onClick={handlePreview}>
+                    {isLoading ? <><Clock size={18} className="spin" /> O&apos;qilmoqda...</> : <><MagnifyingGlass size={18} weight="bold" /> Ma&apos;lumotlarni tekshirish</>}
                   </button>
                 </>
               ) : previewData && !importResult ? (
                 <div className="import-preview-stage">
                   <div className="preview-info-banner">
                     <CheckCircle size={20} weight="fill" color="var(--green)" />
-                    <span>Fayl o&apos;qildi. {previewData.length} ta qator topildi. Iltimos, ma&apos;lumotlar to&apos;g&apos;riligini tekshiring:</span>
+                    <span><strong>{previewData.length}</strong> ta qarzdor topildi.</span>
+                  </div>
+
+                  <div className="preview-stats-row" style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                    <div className="preview-stat-chip">📱 {previewData.filter((d: any) => d.telefon).length} ta telefon</div>
+                    <div className="preview-stat-chip">📷 {previewData.filter((d: any) => d.hasPhoto).length} ta rasm</div>
+                    <div className="preview-stat-chip" style={{ color: 'var(--red)' }}>⚠️ {previewData.filter((d: any) => d.muddatOtganSumma > 0).length} ta kechikkan</div>
+                    <div className="preview-stat-chip">⚖️ {previewData.filter((d: any) => d.sudMalumot).length} ta sudda</div>
                   </div>
 
                   <div className="preview-table-wrap">
                     <table className="mini-table">
-                      <thead>
-                        <tr>
-                          <th>F.I.O</th>
-                          <th>JShShIR</th>
-                          <th>Qarz Summasi</th>
-                          <th>Kechikkan</th>
-                          <th>Telefon</th>
-                        </tr>
-                      </thead>
+                      <thead><tr><th>#</th><th>F.I.O</th><th>Pasport</th><th>JShShIR</th><th>Qarz</th><th>Kechikkan</th><th>Tel</th></tr></thead>
                       <tbody>
                         {previewData.slice(0, 50).map((p: any, idx: number) => (
                           <tr key={idx}>
-                            <td>{p.fish}</td>
-                            <td><code>{p.jshshir}</code></td>
-                            <td>{formatMoney(p.qarzSummasi)}</td>
-                            <td className={p.muddatOtganSumma > 0 ? "text-red" : ""}>{formatMoney(p.muddatOtganSumma)}</td>
-                            <td>{p.telefon}</td>
+                            <td style={{ color: 'var(--text-tertiary)' }}>{p.tartibRaqam || idx + 1}</td>
+                            <td><strong>{p.fish}</strong></td>
+                            <td><code style={{ fontSize: 12 }}>{p.pasport || "—"}</code></td>
+                            <td><code style={{ fontSize: 12 }}>{p.jshshir || "—"}</code></td>
+                            <td style={{ whiteSpace: 'nowrap' }}>{formatMoney(p.qarzSummasi)}</td>
+                            <td className={p.muddatOtganSumma > 0 ? "text-red" : ""} style={{ whiteSpace: 'nowrap' }}>{formatMoney(p.muddatOtganSumma)}</td>
+                            <td style={{ fontSize: 12 }}>{p.telefon || "—"}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                    {previewData.length > 50 && (
-                      <div className="preview-more">Yana {previewData.length - 50} ta qator mavjud...</div>
-                    )}
+                    {previewData.length > 50 && <div className="preview-more">Yana {previewData.length - 50} ta qator mavjud...</div>}
                   </div>
-
-                  <div className="modal-footer-btns" style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-                    <button className="secondary-btn" style={{ flex: 1 }} onClick={() => setPreviewData(null)}>
-                      Orqaga qaytish
-                    </button>
+                  <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+                    <button className="secondary-btn" style={{ flex: 1 }} onClick={() => setPreviewData(null)}>Orqaga</button>
                     <button className="btn-primary-full" style={{ flex: 2, margin: 0 }} onClick={handleCommit} disabled={isLoading}>
-                      {isLoading ? (
-                        <> <Clock size={18} className="spin" /> Yuklanmoqda... </>
-                      ) : (
-                        <> <CheckCircle size={18} weight="bold" /> Hammasi to&apos;g&apos;ri, yuklash </>
-                      )}
+                      {isLoading ? <><Clock size={18} className="spin" /> Yuklanmoqda...</> : <><CheckCircle size={18} weight="bold" /> Hammasi to&apos;g&apos;ri, yuklash</>}
                     </button>
                   </div>
                 </div>
@@ -586,23 +569,17 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
                       </div>
                     )}
                   </div>
-
                   {importResult.errors?.length > 0 && (
                     <div className="report-errors">
-                      <div className="report-section-title">Xatoliklar ro&apos;yxati:</div>
+                      <div className="report-section-title">Xatoliklar:</div>
                       <div className="error-list-scroll">
                         {importResult.errors.map((err: any, idx: number) => (
-                          <div key={idx} className="error-log-item">
-                            <span className="row-num">{err.fish}:</span> {err.msg}
-                          </div>
+                          <div key={idx} className="error-log-item"><span className="row-num">{err.fish}:</span> {err.msg}</div>
                         ))}
                       </div>
                     </div>
                   )}
-
-                  <button className="btn-primary-full" onClick={() => { setIsImportModalOpen(false); setImportResult(null); }}>
-                    Yopish
-                  </button>
+                  <button className="btn-primary-full" onClick={() => { setIsImportModalOpen(false); setImportResult(null); }}>Yopish</button>
                 </div>
               )}
             </div>

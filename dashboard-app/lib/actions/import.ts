@@ -6,25 +6,126 @@ import { revalidatePath } from "next/cache";
 import fs from "fs-extra";
 import path from "path";
 
-// Helper for parsing numbers
-const parseNum = (val: any): number => {
-  if (val === undefined || val === null || val === "") return 0;
-  let target = val;
-  if (typeof val === 'object' && val.result !== undefined) {
-    target = val.result;
-  }
-  if (typeof target === 'number') return target;
-  const cleanStr = String(target).replace(/\s/g, "").replace(/[^\d.,-]/g, "");
-  if (cleanStr.includes(".") && cleanStr.includes(",")) {
-    return parseFloat(cleanStr.replace(/\./g, "").replace(",", "."));
-  }
-  if (cleanStr.includes(",") && !cleanStr.includes(".")) {
-    return parseFloat(cleanStr.replace(",", "."));
-  }
-  return parseFloat(cleanStr) || 0;
-};
+/**
+ * Excel ustunlari xaritasi (ikkala fayl uchun bir xil):
+ * 
+ * Col  1: T/r. (tartib raqami)
+ * Col  2: Rasmi (rasm — image obyekti)
+ * Col  3: Pasport bo'yicha manzili
+ * Col  4: F.I.O.
+ * Col  5: Pasport seriyasi va raqami
+ * Col  6: Tug'ilgan vaqti (Date obyekti)
+ * Col  7: JShShIR (number yoki bo'shliqli string)
+ * Col  8: Olingan qarz summasi (number yoki "48.091.168,45" formatted string)
+ * Col  9: Olingan qarz summasi matnda
+ * Col 10: Qarz shartnomasi tasdiqlangan sana (string: "2019-yil 12-mart")
+ * Col 11: Tasdiqlagan notarius
+ * Col 12: Shartnoma reestr raqami
+ * Col 13: Qarzdorlik holati sanasi (string)
+ * Col 14: Muddati o'tkan qarz summasi (number yoki formatted string)
+ * Col 15: Muddati o'tkan qarz summasi matnda
+ * Col 16: Telefon raqami
+ * Col 17: Ogohlantirish xati yuborilgan sana va raqami
+ * Col 18: Sudga chiqarilganligi haqida ma'lumot
+ */
 
-// 1-bosqich: Excelni o'qish va preview qaytarish (Bazaga saqlamaydi)
+// ─── Yordamchi funksiyalar ───
+
+/** Hujayradan matn olish — formula, richText va oddiy qiymatlarni to'g'ri qaytaradi */
+function getCellText(row: ExcelJS.Row, col: number): string {
+  const cell = row.getCell(col);
+  const val = cell.value;
+
+  if (val === null || val === undefined) return "";
+
+  // Formula natijasi
+  if (typeof val === "object" && "result" in val) {
+    return String(val.result ?? "").trim();
+  }
+
+  // RichText
+  if (typeof val === "object" && "richText" in val) {
+    return (val as any).richText.map((r: any) => r.text).join("").trim();
+  }
+
+  // Date
+  if (val instanceof Date) {
+    return val.toISOString();
+  }
+
+  // cell.text eng xavfsiz (ExcelJS o'zi formatlaydi)
+  return cell.text?.trim() || String(val).trim();
+}
+
+/** 
+ * Summani o'qish — har xil formatlarni qo'llab-quvvatlaydi:
+ * - number: 52050500
+ * - Yevropa formati string: "48.091.168,45" (nuqta = minglik, vergul = kasr)
+ * - Formula: { formula: "...", result: 43667824.68 }
+ */
+function parseAmount(val: any): number {
+  if (val === null || val === undefined || val === "") return 0;
+
+  // Formula obyekti
+  if (typeof val === "object" && val !== null && "result" in val) {
+    val = val.result;
+  }
+
+  // Allaqachon raqam
+  if (typeof val === "number") return Math.round(val * 100) / 100;
+
+  // String formatni tozalash
+  let str = String(val).trim();
+
+  // Faqat raqam, nuqta, vergul va minus qoldirish
+  str = str.replace(/[^\d.,-]/g, "");
+
+  if (!str) return 0;
+
+  // Yevropa formati: "48.091.168,45" — nuqta=minglik, vergul=kasr
+  if (str.includes(".") && str.includes(",")) {
+    // Nuqtalarni olib tashlash (minglik ajratuvchi), vergulni nuqtaga aylantirish
+    str = str.replace(/\./g, "").replace(",", ".");
+  }
+  // Faqat vergul bor (kasr): "1234,56" 
+  else if (str.includes(",") && !str.includes(".")) {
+    str = str.replace(",", ".");
+  }
+
+  return parseFloat(str) || 0;
+}
+
+/** JShShIR ni tozalash — bo'shliqlarni olib tashlash, faqat raqamlar */
+function cleanJshshir(val: any): string {
+  if (val === null || val === undefined) return "";
+  
+  // Formula
+  if (typeof val === "object" && "result" in val) {
+    val = val.result;
+  }
+
+  return String(val).replace(/\s/g, "").replace(/[^\d]/g, "");
+}
+
+/** Telefon raqamni tozalash */
+function cleanPhone(text: string): string {
+  if (!text) return "";
+  // Faqat raqamlar va + belgi
+  let cleaned = text.replace(/[^\d+]/g, "");
+  // Agar 998 bilan boshlansa va + bo'lmasa, qo'shish
+  if (cleaned.startsWith("998") && !cleaned.startsWith("+")) {
+    cleaned = "+" + cleaned;
+  }
+  return cleaned;
+}
+
+/** Pasportni tozalash */
+function cleanPassport(text: string): string {
+  return text.replace(/\s/g, "").toUpperCase();
+}
+
+// ─── 1-BOSQICH: Preview (Bazaga saqlamaydi) ───
+
 export async function previewDebtorsExcel(formData: FormData) {
   try {
     const file = formData.get("file") as File;
@@ -40,87 +141,203 @@ export async function previewDebtorsExcel(formData: FormData) {
     const data: any[] = [];
     const errors: { row: number; msg: string }[] = [];
 
-    for (let i = 3; i <= worksheet.rowCount; i++) {
-      const row = worksheet.getRow(i);
-      const getCellText = (col: number) => {
-        const cell = row.getCell(col);
-        if (typeof cell.value === 'object' && cell.value !== null && 'result' in cell.value) {
-          return String(cell.value.result || "").trim();
-        }
-        return cell.text?.trim() || "";
-      };
+    // Rasmlarni olish
+    const images = worksheet.getImages();
+    const imageMap = new Map<number, string>(); // row -> base64 or path
 
-      const fish = getCellText(4);
-      if (!fish || fish === "") continue;
-
-      data.push({
-        row: i,
-        fish,
-        manzil: getCellText(3),
-        pasport: getCellText(5).replace(/\s/g, "").toUpperCase(),
-        jshshir: getCellText(7).replace(/\s/g, ""),
-        qarzSummasi: parseNum(row.getCell(8).value),
-        qarzMatnda: getCellText(9),
-        notarius: getCellText(11),
-        reestrRaqam: getCellText(12),
-        muddatOtganSumma: parseNum(row.getCell(14).value),
-        telefon: getCellText(16).replace(/[^\d+]/g, ""),
-      });
+    // Rasmlarni row bo'yicha mapping qilish
+    for (const img of images) {
+      if (img.range && img.range.tl) {
+        const rowNum = Math.floor(img.range.tl.nativeRow) + 1; // 0-indexed -> 1-indexed
+        try {
+          const media = workbook.getImage(Number(img.imageId));
+          if (media && media.buffer) {
+            const ext = media.extension || "jpeg";
+            const base64 = Buffer.from(media.buffer as ArrayBuffer).toString("base64");
+            imageMap.set(rowNum, `data:image/${ext};base64,${base64}`);
+          }
+        } catch { /* skip broken images */ }
+      }
     }
 
-    return { success: true, data, errors };
+    // Row 1 = Sarlavha (merged), Row 2 = Ustun nomlari, Row 3+ = Ma'lumot
+    for (let i = 3; i <= worksheet.rowCount; i++) {
+      const row = worksheet.getRow(i);
+      
+      // F.I.O. bo'sh bo'lsa — qatorni o'tkazib yuborish
+      const fish = getCellText(row, 4);
+      if (!fish) continue;
+
+      try {
+        const tartibRaqam = parseInt(getCellText(row, 1)) || null;
+        const manzil = getCellText(row, 3);
+        const pasport = cleanPassport(getCellText(row, 5));
+        
+        // Tug'ilgan sana — Date yoki string bo'lishi mumkin
+        let tugilganSana = "";
+        const rawDate = row.getCell(6).value;
+        if (rawDate instanceof Date) {
+          tugilganSana = rawDate.toISOString().split("T")[0]; // "1987-09-21"
+        } else if (rawDate) {
+          tugilganSana = getCellText(row, 6);
+        }
+
+        const jshshir = cleanJshshir(row.getCell(7).value);
+        const qarzSummasi = parseAmount(row.getCell(8).value);
+        const qarzMatnda = getCellText(row, 9);
+        const shartnomaSana = getCellText(row, 10);
+        const notarius = getCellText(row, 11);
+        const reestrRaqam = getCellText(row, 12);
+        const holatSanasi = getCellText(row, 13);
+        const muddatOtganSumma = parseAmount(row.getCell(14).value);
+        const muddatOtganMatnda = getCellText(row, 15);
+        const telefon = cleanPhone(getCellText(row, 16));
+        const ogohlantirishXati = getCellText(row, 17);
+        const sudMalumot = getCellText(row, 18);
+
+        // Rasm bor-yo'qligini tekshirish
+        const photoBase64 = imageMap.get(i) || null;
+
+        data.push({
+          row: i,
+          tartibRaqam,
+          fish,
+          manzil,
+          pasport,
+          tugilganSana,
+          jshshir,
+          qarzSummasi,
+          qarzMatnda,
+          shartnomaSana,
+          notarius,
+          reestrRaqam,
+          holatSanasi,
+          muddatOtganSumma,
+          muddatOtganMatnda,
+          telefon,
+          ogohlantirishXati,
+          sudMalumot,
+          hasPhoto: !!photoBase64,
+        });
+      } catch (err: any) {
+        errors.push({ row: i, msg: `${fish}: ${err.message}` });
+      }
+    }
+
+    return { 
+      success: true, 
+      data, 
+      errors,
+      summary: {
+        total: data.length,
+        withPhone: data.filter(d => d.telefon).length,
+        withPhoto: data.filter(d => d.hasPhoto).length,
+        withOverdue: data.filter(d => d.muddatOtganSumma > 0).length,
+        withCourt: data.filter(d => d.sudMalumot).length,
+      }
+    };
   } catch (error: any) {
     console.error("Preview error:", error);
     return { success: false, error: error.message };
   }
 }
 
-// 2-bosqich: Tasdiqlangan ma'lumotlarni saqlash
+// ─── 2-BOSQICH: Tasdiqlangandan so'ng bazaga saqlash ───
+
 export async function commitDebtorsImport(data: any[], loanType: "20_yil" | "7_yil") {
   try {
     let importedCount = 0;
     const errors: any[] = [];
 
+    // Rasmlar uchun papka
+    const uploadDir = path.join(process.cwd(), "public", "uploads", "debtors");
+    await fs.ensureDir(uploadDir);
+
     for (const item of data) {
       try {
-        const { fish, telefon, manzil, pasport, jshshir, qarzSummasi, qarzMatnda, notarius, reestrRaqam, muddatOtganSumma } = item;
+        const { 
+          fish, telefon, manzil, pasport, jshshir, tugilganSana,
+          qarzSummasi, qarzMatnda, notarius, reestrRaqam, 
+          muddatOtganSumma, shartnomaSana, holatSanasi,
+          tartibRaqam, ogohlantirishXati, sudMalumot
+        } = item;
 
-        // Find debtor by jshshir or pasport
+        // ── 1. Qarzdorni topish yoki yaratish ──
         let debtor = null;
-        if (jshshir) {
+
+        // Avval JShShIR bo'yicha qidirish (eng ishonchli identifikator)
+        if (jshshir && jshshir.length >= 10) {
           debtor = await prisma.debtor.findUnique({ where: { jshshir } });
         }
-        if (!debtor && pasport) {
+
+        // Keyin pasport bo'yicha qidirish
+        if (!debtor && pasport && pasport.length >= 5) {
           debtor = await prisma.debtor.findUnique({ where: { pasport } });
         }
 
+        // Yangilash yoki yaratish
         if (debtor) {
           debtor = await prisma.debtor.update({
             where: { id: debtor.id },
-            data: { fish, telefon, manzil }
+            data: { 
+              fish, 
+              telefon: telefon || debtor.telefon,
+              manzil: manzil || debtor.manzil,
+              tartibRaqam: tartibRaqam ?? debtor.tartibRaqam,
+              tugilganSana: tugilganSana ? new Date(tugilganSana) : debtor.tugilganSana,
+            }
           });
         } else {
           debtor = await prisma.debtor.create({
-            data: { fish, telefon, manzil, pasport: pasport || null, jshshir: jshshir || null }
+            data: { 
+              fish, 
+              telefon: telefon || null,
+              manzil: manzil || null,
+              pasport: pasport || null,
+              jshshir: jshshir || null,
+              tartibRaqam,
+              tugilganSana: tugilganSana ? new Date(tugilganSana) : null,
+            }
           });
         }
 
-
-        // Find existing loan
+        // ── 2. Qarzni topish yoki yaratish ──
         const existingLoan = await prisma.loan.findFirst({
           where: { debtorId: debtor.id, loanType }
         });
+
+        // Holat aniqlash
+        let status = "faol";
+        if (sudMalumot && sudMalumot.trim().length > 3) {
+          status = "sudda";
+        } else if (muddatOtganSumma > 0) {
+          status = "kechikkan";
+        }
+
+        // Xavf darajasini hisoblash
+        let riskScore = 10;
+        if (status === "sudda") {
+          riskScore = 95;
+        } else if (muddatOtganSumma > 0 && qarzSummasi > 0) {
+          const ratio = muddatOtganSumma / qarzSummasi;
+          if (ratio > 0.5) riskScore = 90;
+          else if (ratio > 0.3) riskScore = 75;
+          else if (ratio > 0.1) riskScore = 55;
+          else riskScore = 35;
+        }
 
         const loanData = {
           debtorId: debtor.id,
           loanType,
           qarzSummasi,
-          qarzMatnda,
-          notarius,
-          reestrRaqam,
+          qarzMatnda: qarzMatnda || null,
+          notarius: notarius || null,
+          reestrRaqam: reestrRaqam || null,
           muddatOtganSumma,
-          status: muddatOtganSumma > 0 ? "kechikkan" : "faol",
-          riskScore: muddatOtganSumma > (qarzSummasi * 0.3) ? 85 : (muddatOtganSumma > 0 ? 45 : 10)
+          status,
+          riskScore,
+          shartnomaSana: shartnomaSana ? parseDateString(shartnomaSana) : null,
+          holatSanasi: holatSanasi ? parseDateString(holatSanasi) : null,
         };
 
         if (existingLoan) {
@@ -131,14 +348,46 @@ export async function commitDebtorsImport(data: any[], loanType: "20_yil" | "7_y
 
         importedCount++;
       } catch (err: any) {
-        errors.push({ fish: item.fish, msg: err.message });
+        errors.push({ fish: item.fish || `Qator ${item.row}`, msg: err.message });
       }
     }
 
     revalidatePath("/debtors");
-    revalidatePath("/dashboard");
+    revalidatePath("/");
     return { success: true, count: importedCount, errors };
   } catch (error: any) {
+    console.error("Commit error:", error);
     return { success: false, error: error.message };
   }
+}
+
+/** "2019-yil 12-mart" formatidagi sanani Date ga aylantirish */
+function parseDateString(dateStr: string): Date | null {
+  if (!dateStr) return null;
+
+  const months: Record<string, number> = {
+    yanvar: 0, fevral: 1, mart: 2, aprel: 3,
+    may: 4, iyun: 5, iyul: 6, avgust: 7,
+    sentabr: 8, oktyabr: 9, noyabr: 10, dekabr: 11,
+  };
+
+  // "2019-yil 12-mart" yoki "2025-yil 5-noyabr"
+  const match = dateStr.match(/(\d{4})-yil\s+(\d{1,2})-(\w+)/i);
+  if (match) {
+    const year = parseInt(match[1]);
+    const day = parseInt(match[2]);
+    const monthName = match[3].toLowerCase();
+    const month = months[monthName];
+    if (month !== undefined) {
+      return new Date(year, month, day);
+    }
+  }
+
+  // ISO format fallback
+  try {
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) return d;
+  } catch { /* ignore */ }
+
+  return null;
 }
