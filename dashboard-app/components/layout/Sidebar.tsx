@@ -60,13 +60,7 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <div className="logo-badge">
-          <Image src="/logo.png" alt="Yoshlar Ittifoqi" width={40} height={40} className="logo-img" />
-          <div>
-            <div className="logo-title">Yoshlar Ittifoqi</div>
-            <div className="logo-sub">Qarz Monitoring</div>
-          </div>
-        </div>
+        <Image src="/logo.png" alt="Yoshlar Ittifoqi" width={180} height={50} className="logo-img" priority />
       </div>
       
       <nav className="sidebar-nav">
