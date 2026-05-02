@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import {
   ChartBar, Users, CreditCard, FileText, Scales, CalendarBlank,
-  ChartLineUp, Target
+  ChartLineUp, Target, SignOut, CaretDown
 } from "@phosphor-icons/react";
 import { getSidebarStats } from "../../lib/actions/stats";
 
@@ -29,6 +30,12 @@ const NAV: NavItemData[] = [
   { icon: Target, label: "KPI", href: "/kpi" },
 ];
 
+const ROLE_LABELS: Record<string, string> = {
+  admin: "Administrator",
+  operator: "Operator",
+  viewer: "Kuzatuvchi",
+};
+
 function NavItem({ item, currentPath, stats }: { item: NavItemData; currentPath: string; stats: Record<string, number> }) {
   const Icon = item.icon;
   const isActive = item.href === "/" ? currentPath === item.href : currentPath.startsWith(item.href);
@@ -49,13 +56,23 @@ function NavItem({ item, currentPath, stats }: { item: NavItemData; currentPath:
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [stats, setStats] = useState<Record<string, number>>({});
+  const [showUserMenu, setShowUserMenu] = useState(false);
   
   useEffect(() => {
     getSidebarStats().then(data => {
       setStats(data as Record<string, number>);
     });
   }, [pathname]); // Refresh stats on navigation
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/login" });
+  };
+
+  const userName = session?.user?.name || "Foydalanuvchi";
+  const userRole = ROLE_LABELS[session?.user?.role || "operator"] || session?.user?.role || "Operator";
+  const userInitial = userName.charAt(0).toUpperCase();
   
   return (
     <aside className="sidebar">
@@ -76,15 +93,28 @@ export function Sidebar() {
       </nav>
       
       <div className="sidebar-footer">
-        <div className="user-card">
-          <div className="user-avatar">A</div>
-          <div>
-            <div className="user-name">Admin</div>
-            <div className="user-role">Administrator</div>
+        <div
+          className={`user-card ${showUserMenu ? "active" : ""}`}
+          onClick={() => setShowUserMenu(!showUserMenu)}
+        >
+          <div className="user-avatar">{userInitial}</div>
+          <div className="user-info-block">
+            <div className="user-name">{userName}</div>
+            <div className="user-role">{userRole}</div>
           </div>
+          <CaretDown size={14} className={`user-caret ${showUserMenu ? "rotated" : ""}`} />
         </div>
+
+        {showUserMenu && (
+          <div className="user-menu">
+            <div className="user-menu-email">{session?.user?.email}</div>
+            <button className="user-menu-btn logout-btn" onClick={handleLogout}>
+              <SignOut size={18} weight="bold" />
+              Chiqish
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );
 }
-

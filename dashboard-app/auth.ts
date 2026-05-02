@@ -1,11 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "./lib/prisma";
-import bcrypt from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   providers: [
     CredentialsProvider({
@@ -18,6 +14,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
+
+        // Dynamic import to avoid edge runtime issues
+        const { prisma } = await import("./lib/prisma");
+        const bcrypt = (await import("bcryptjs")).default;
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
@@ -54,6 +54,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id as string;
       }
       return session;
+    },
+    authorized({ auth, request }) {
+      const isLoggedIn = !!auth?.user;
+      const isLoginPage = request.nextUrl.pathname.startsWith("/login");
+
+      // Login sahifasiga ruxsat berish
+      if (isLoginPage) {
+        if (isLoggedIn) {
+          return Response.redirect(new URL("/", request.nextUrl));
+        }
+        return true;
+      }
+
+      // Boshqa barcha sahifalar — login bo'lishi kerak
+      return isLoggedIn;
     },
   },
   pages: {
