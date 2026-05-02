@@ -43,48 +43,22 @@ export function CustomDatePicker({ value, onChange, placeholder = "Sanani tanlan
     setIsOpen(false);
   };
 
-  const renderCells = () => {
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart);
-    const endDate = endOfWeek(monthEnd);
+  // Generate calendar grid
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(monthStart);
+  const startDate = startOfWeek(monthStart);
+  const endDate = endOfWeek(monthEnd);
 
-    const rows = [];
-    let days = [];
-    let day = startDate;
-    let formattedDate = "";
-
-    const selectedDateObj = value ? new Date(value) : null;
-
-    while (day <= endDate) {
-      for (let i = 0; i < 7; i++) {
-        formattedDate = format(day, "d");
-        const cloneDay = day;
-        
-        const isCurrentMonth = isSameMonth(day, monthStart);
-        const isSelected = selectedDateObj ? isSameDay(day, selectedDateObj) : false;
-        const isToday = isSameDay(day, new Date());
-
-        days.push(
-          <div
-            key={day.toString()}
-            className={`dp-day ${!isCurrentMonth ? "disabled" : ""} ${isSelected ? "selected" : ""} ${isToday && !isSelected ? "today" : ""}`}
-            onClick={() => isCurrentMonth && onDateClick(cloneDay)}
-          >
-            <span className="dp-day-num">{formattedDate}</span>
-          </div>
-        );
-        day = addDays(day, 1);
-      }
-      rows.push(
-        <div className="dp-row" key={day.toString()}>
-          {days}
-        </div>
-      );
-      days = [];
+  const weeks = [];
+  let currentDay = startDate;
+  while (currentDay <= endDate) {
+    const week = [];
+    for (let i = 0; i < 7; i++) {
+      week.push(currentDay);
+      currentDay = addDays(currentDay, 1);
     }
-    return <div className="dp-body">{rows}</div>;
-  };
+    weeks.push(week);
+  }
 
   const formattedDisplay = value ? `${new Date(value).getDate()}-${UZ_MONTHS[new Date(value).getMonth()]} ${new Date(value).getFullYear()}` : "";
 
@@ -114,7 +88,26 @@ export function CustomDatePicker({ value, onChange, placeholder = "Sanani tanlan
               <div key={i} className="dp-day-name">{d}</div>
             ))}
           </div>
-          {renderCells()}
+          <div className="dp-body">
+            {weeks.map((week, wIdx) => (
+              <div className="dp-row" key={wIdx}>
+                {week.map((day, dIdx) => {
+                  const isCurrentMonth = isSameMonth(day, monthStart);
+                  const isSelected = value ? isSameDay(day, new Date(value)) : false;
+                  const isToday = isSameDay(day, new Date());
+                  return (
+                    <div
+                      key={dIdx}
+                      className={`dp-day ${!isCurrentMonth ? "disabled" : ""} ${isSelected ? "selected" : ""} ${isToday && !isSelected ? "today" : ""}`}
+                      onClick={() => isCurrentMonth && onDateClick(day)}
+                    >
+                      <span className="dp-day-num">{format(day, "d")}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
