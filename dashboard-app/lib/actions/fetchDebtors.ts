@@ -57,7 +57,7 @@ export async function fetchDebtorsPaginated({ page, search, status, type }: Fetc
     take: PAGE_SIZE * 3,
   });
 
-  // Group by debtor (avoid duplicates)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const debtorMap = new Map<number, any>();
   
   for (const loan of loans) {

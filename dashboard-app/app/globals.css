@@ -1548,3 +1548,14 @@ tr:hover td { background: var(--tr-hover); }
   }
 }
 
+
+/* Error Pages */
+.error-page-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); position: relative; overflow: hidden; padding: 20px; }
+.error-bg-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(0, 113, 227, 0.15) 0%, rgba(0,0,0,0) 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; z-index: 0; filter: blur(60px); }
+.error-bg-red { background: radial-gradient(circle, rgba(255, 59, 48, 0.15) 0%, rgba(0,0,0,0) 70%); }
+.error-card-glass { position: relative; z-index: 1; background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 48px; max-width: 480px; width: 100%; text-align: center; box-shadow: var(--shadow-lg); backdrop-filter: blur(20px); animation: modalUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+.error-icon-wrap { width: 100px; height: 100px; border-radius: 50%; background: rgba(0, 113, 227, 0.1); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+.error-title { font-size: 64px; font-weight: 800; letter-spacing: -2px; color: var(--text-primary); margin-bottom: 8px; line-height: 1; }
+.error-subtitle { font-size: 20px; font-weight: 600; color: var(--text-secondary); margin-bottom: 16px; }
+.error-text { font-size: 15px; color: var(--text-tertiary); line-height: 1.6; margin-bottom: 32px; }
+.error-actions { display: flex; flex-direction: column; gap: 12px; }

@@ -14,6 +14,7 @@ export default async function DebtorsPage() {
     take: 60,
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const debtorMap = new Map<number, any>();
   for (const loan of loans) {
     const paidForLoan = loan.payments.reduce((acc, p) => acc + p.summa, 0);
