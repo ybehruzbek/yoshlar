@@ -1,14 +1,9 @@
 import PizZip from "pizzip";
-import Docxtemplater from "docxtemplater";
 import fs from "fs";
 import path from "path";
 
 /**
- * Generates a DOCX document from a template using docxtemplater.
- * 
- * @param templateName The name of the template file in documents/templates (e.g. "Da'vo ariza.docx")
- * @param data The data object containing tag replacements
- * @returns Buffer containing the generated DOCX file
+ * Generates a DOCX document by replacing raw text in the XML.
  */
 export function generateDocument(templateName: string, data: Record<string, any>): Buffer {
   const templatePath = path.join(process.cwd(), "documents", "templates", templateName);
@@ -17,23 +12,31 @@ export function generateDocument(templateName: string, data: Record<string, any>
     throw new Error(`Template file not found: ${templatePath}`);
   }
 
-  // Load the docx file as binary content
   const content = fs.readFileSync(templatePath, "binary");
-
-  // Unzip the content
   const zip = new PizZip(content);
 
-  // Initialize docxtemplater
-  const doc = new Docxtemplater(zip, {
-    paragraphLoop: true,
-    linebreaks: true,
-  });
+  // Read the main document XML
+  let docXml = zip.file("word/document.xml")?.asText() || "";
 
-  // Render the document (replace tags with data)
-  doc.render(data);
+  // Replace hardcoded dummy values with actual data
+  // For Da'vo ariza
+  docXml = docXml.replace(/KADIROV ODIL MURATOVICH/g, (data.FISH || "").toUpperCase());
+  docXml = docXml.replace(/Kadirov Odil Muratovich/g, data.FISH || "");
+  docXml = docXml.replace(/AD 1114901/g, data.PASPORT || "Noma'lum");
+  docXml = docXml.replace(/31602870171169/g, data.JSHSHIR || "Noma'lum");
+  docXml = docXml.replace(/Toshkent shahri, Uchtepa tumani, Jurjoniy MFY, Zamaxshariy ko‘chasi 30-uy/g, data.MANZIL || "");
+  docXml = docXml.replace(/68 590 000/g, data.QARZ_SUMMASI || "0");
+  docXml = docXml.replace(/22 863 280/g, data.QARZ_QOLDIQ || "0");
+  
+  // For Talabnoma
+  docXml = docXml.replace(/MUXAMMEDOV JAMSHID AKBAROVICH/g, (data.FISH || "").toUpperCase());
+  docXml = docXml.replace(/Muxammedov Jamshid Akbarovich/g, data.FISH || "");
 
-  // Get the generated document as a nodejs Buffer
-  const buf = doc.getZip().generate({
+  // Update the XML in the zip
+  zip.file("word/document.xml", docXml);
+
+  // Generate the new document buffer
+  const buf = zip.generate({
     type: "nodebuffer",
     compression: "DEFLATE",
   });
