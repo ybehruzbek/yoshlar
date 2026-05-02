@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { 
   Phone, MapPin, IdentificationCard, Calendar, 
   CurrencyCircleDollar, Warning, CheckCircle, 
   Clock, FileText, ChatText, ArrowLeft,
   Receipt, Plus, DotsThree, Bell, Scales,
-  CreditCard, TrendUp, ShieldCheck, Envelope
+  CreditCard, TrendUp, ShieldCheck, Envelope, X
 } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/utils/format";
 import { generateSchedule, ScheduleItem } from "@/lib/utils/schedule";
+import { addPayment } from "@/lib/actions/addPayment";
 
 const UZ_MONTHS = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktyabr", "noyabr", "dekabr"];
 
@@ -35,6 +36,15 @@ const SafeDate = ({ date, format }: { date: string | Date | null; format?: "shor
 export function DebtorProfileClient({ debtor }: { debtor: any }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"loans" | "schedule" | "notes" | "docs">("loans");
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [paymentForm, setPaymentForm] = useState({
+    loanId: debtor.loans[0]?.id || 0,
+    summa: "",
+    tolovSana: new Date().toISOString().split("T")[0],
+    usul: "bank",
+    izoh: ""
+  });
 
   const totalLoan = debtor.loans.reduce((a: number, l: any) => a + l.qarzSummasi, 0);
   const totalOverdue = debtor.loans.reduce((a: number, l: any) => a + l.muddatOtganSumma, 0);
@@ -50,6 +60,25 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
     };
     const s = map[status] || { cls: "badge-gray", label: status };
     return <span className={`badge ${s.cls}`}>{s.label}</span>;
+  };
+
+  const handleAddPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    startTransition(async () => {
+      const res = await addPayment({
+        loanId: Number(paymentForm.loanId),
+        summa: Number(paymentForm.summa.replace(/[^0-9.-]+/g,"")),
+        tolovSana: paymentForm.tolovSana,
+        usul: paymentForm.usul,
+        maqsad: paymentForm.izoh
+      });
+      if (res.success) {
+        setIsPaymentModalOpen(false);
+        setPaymentForm(prev => ({ ...prev, summa: "", izoh: "" }));
+      } else {
+        alert("Xatolik yuz berdi: " + res.error);
+      }
+    });
   };
 
   return (
@@ -375,9 +404,12 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
             <div className="dp-side-card">
               <h3>Tezkor amallar</h3>
               <div className="dp-actions">
+                <button onClick={() => setIsPaymentModalOpen(true)} className="btn-pay" style={{ background: 'var(--green)', color: '#fff', border: 'none' }}>
+                  <CreditCard size={18} /> To'lov kiritish
+                </button>
                 <button><Warning size={18} /> Sudga ariza tayyorlash</button>
                 <button><Envelope size={18} /> SMS xabarnoma yuborish</button>
-                <button><Clock size={18} /> To'lov grafigini ko'rish</button>
+                <button onClick={() => setActiveTab('schedule')}><Clock size={18} /> To'lov grafigini ko'rish</button>
                 <button><FileText size={18} /> Hujjat generatsiya</button>
               </div>
             </div>
@@ -398,8 +430,90 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
         </div>
       </div>
 
+      {/* Payment Modal */}
+      {isPaymentModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-glass">
+            <div className="modal-head">
+              <h2>To'lov kiritish</h2>
+              <button className="modal-close" onClick={() => setIsPaymentModalOpen(false)}><X size={20} /></button>
+            </div>
+            <form className="modal-body" onSubmit={handleAddPayment}>
+              {debtor.loans.length > 1 && (
+                <div className="form-group">
+                  <label>Shartnoma</label>
+                  <select value={paymentForm.loanId} onChange={e => setPaymentForm({...paymentForm, loanId: Number(e.target.value)})}>
+                    {debtor.loans.map((l: any) => (
+                      <option key={l.id} value={l.id}>{l.loanType === '20_yil' ? '20 yillik' : '7 yillik'} ({formatMoney(l.qarzSummasi)})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
+              <div className="form-group">
+                <label>To'lov summasi</label>
+                <div className="input-wrap">
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Masalan: 1 500 000"
+                    value={paymentForm.summa} 
+                    onChange={e => {
+                      const val = e.target.value.replace(/[^0-9]/g, "");
+                      setPaymentForm({...paymentForm, summa: val ? Number(val).toLocaleString() : ""});
+                    }} 
+                  />
+                  <span className="input-suffix">so'm</span>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Sana</label>
+                  <input type="date" required value={paymentForm.tolovSana} onChange={e => setPaymentForm({...paymentForm, tolovSana: e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label>Usul</label>
+                  <select value={paymentForm.usul} onChange={e => setPaymentForm({...paymentForm, usul: e.target.value})}>
+                    <option value="bank">Bank</option>
+                    <option value="payme">Payme/Click</option>
+                    <option value="naqd">Naqd pul</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Izoh (ixtiyoriy)</label>
+                <input type="text" placeholder="Kvitansiya raqami yoki izoh..." value={paymentForm.izoh} onChange={e => setPaymentForm({...paymentForm, izoh: e.target.value})} />
+              </div>
+
+              <button type="submit" className="btn-primary-full" disabled={isPending} style={{ marginTop: '12px' }}>
+                {isPending ? "Saqlanmoqda..." : "Saqlash va qo'shish"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         .dp { max-width: 1200px; margin: 0 auto; padding-bottom: 80px; }
+        
+        /* ── Modal ── */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 20px; animation: fadeIn 0.2s ease; }
+        .modal-glass { background: var(--bg-card); width: 100%; max-width: 440px; border-radius: 24px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); overflow: hidden; animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-head { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border); }
+        .modal-head h2 { font-size: 18px; font-weight: 700; margin: 0; }
+        .modal-close { background: var(--bg-sidebar); border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; }
+        .modal-close:hover { background: var(--border); color: var(--text-primary); }
+        .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+        .form-group input, .form-group select { padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-sidebar); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none; transition: border 0.2s; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+        .input-wrap { position: relative; display: flex; align-items: center; }
+        .input-wrap input { width: 100%; padding-right: 48px; font-size: 16px; font-weight: 700; }
+        .input-suffix { position: absolute; right: 16px; color: var(--text-tertiary); font-size: 14px; font-weight: 600; }
         .dp-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
         .dp-back { display: flex; align-items: center; gap: 8px; background: none; border: none; color: var(--text-secondary); font-weight: 600; cursor: pointer; font-size: 14px; }
         .dp-back:hover { color: var(--text-primary); }
