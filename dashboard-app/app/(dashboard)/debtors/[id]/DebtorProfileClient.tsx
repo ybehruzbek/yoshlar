@@ -511,7 +511,7 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
         
         /* ── Modal ── */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 20px; animation: fadeIn 0.2s ease; }
-        .modal-glass { background: var(--bg-card); width: 100%; max-width: 440px; border-radius: 24px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); overflow: hidden; animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-glass { background: var(--bg-card); width: 100%; max-width: 440px; border-radius: 24px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); overflow: visible; animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         .modal-head { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border); }
         .modal-head h2 { font-size: 18px; font-weight: 700; margin: 0; }
         .modal-close { background: var(--bg-sidebar); border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; }
