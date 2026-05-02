@@ -138,7 +138,7 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
         </div>
 
         {/* Grid */}
-        <div className="dp-grid">
+        <div className={`dp-grid ${activeTab === "schedule" ? "schedule-mode" : ""}`}>
           <div className="dp-main">
             {/* Tabs */}
             <div className="dp-tabs">
@@ -447,7 +447,9 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
         .dp-risk-mini-fill { height: 100%; border-radius: 5px; transition: width 0.6s ease; }
 
         /* ── Grid ── */
-        .dp-grid { display: grid; grid-template-columns: 1fr 320px; gap: 32px; }
+        .dp-grid { display: grid; grid-template-columns: 1fr 320px; gap: 32px; transition: all 0.3s ease; }
+        .dp-grid.schedule-mode { grid-template-columns: 1fr; }
+        .dp-grid.schedule-mode .dp-side { display: none; }
 
         /* ── Tabs ── */
         .dp-tabs { display: flex; gap: 6px; margin-bottom: 28px; background: var(--bg-card); padding: 6px; border-radius: 14px; border: 1px solid var(--border); width: fit-content; }
@@ -551,7 +553,7 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
         .dp-table td { padding: 12px 20px; border-bottom: 1px solid var(--border); color: var(--text-primary); }
         .dp-table tr:last-child td { border-bottom: none; }
         .dp-table tr:hover td { background: rgba(255,255,255,0.02); }
-        .dp-table th.num, .dp-table td.num { text-align: right; font-family: 'SF Mono', 'Menlo', monospace; letter-spacing: -0.2px; }
+        .dp-table th.num, .dp-table td.num { text-align: right; font-family: 'SF Mono', 'Menlo', monospace; letter-spacing: -0.2px; white-space: nowrap; }
         .dp-table td.bold { font-weight: 700; }
         .dp-table tr.row-danger td { background: rgba(255, 59, 48, 0.05); }
         .dp-table tr.row-success td { background: rgba(52, 199, 89, 0.05); }
