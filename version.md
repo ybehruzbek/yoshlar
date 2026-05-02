@@ -36,7 +36,7 @@
 ### v0.4.0 — Auth tizimi: Login, Logout, Route Protection (2026-05-03)
 
 **Nima qilindi:**
-- ✅ **Login sahifasi** (`/login`) — premium glassmorphism dizayn, animated background, logo, statistikalar
+- ✅ **Login sahifasi** (`/login`) — premium qora dizayn (dashboardga moslashtirildi)
 - ✅ **NextAuth v5** — Credentials provider, JWT session strategy
 - ✅ **Route protection** — `proxy.ts` (Next.js 16 formati) orqali barcha sahifalar himoyalangan
 - ✅ **Authorized callback** — login bo'lmaganlar `/login` ga redirect, kirganlar `/login` dan `/ `ga redirect
@@ -45,7 +45,8 @@
 - ✅ **Seed script** — PostgreSQL uchun tuzatildi, admin + operator yaratildi
 - ✅ **SessionProvider** — `layout.tsx` ga qo'shildi
 - ✅ **auth.ts** — PrismaAdapter olib tashlandi (Credentials bilan kerak emas), dynamic import (edge runtime uchun)
-- GitHub ga push qilindi: commit `cf1639b`
+- ✅ **Skeleton Loading** — barcha sahifalar uchun navigatsiya vaqtida ko'rsatiladigan skeleton ekranlar qo'shildi
+- GitHub ga push qilindi: commit `cf1639b`, `8aa6852`
 
 **Login ma'lumotlari:**
 - Admin: `admin@yoshlar.uz` / `admin123`

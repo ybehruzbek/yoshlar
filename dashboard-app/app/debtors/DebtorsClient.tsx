@@ -215,7 +215,7 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
     formData.append("file", selectedFile);
     const result = await previewDebtorsExcel(formData);
     setIsLoading(false);
-    if (result.success) setPreviewData(result.data);
+    if (result.success) setPreviewData(result.data || null);
     else alert(`Xatolik: ${result.error}`);
   };
 

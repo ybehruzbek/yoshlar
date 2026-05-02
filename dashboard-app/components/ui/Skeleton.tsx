@@ -9,8 +9,8 @@ export function Skeleton({ w, h, r, className }: { w?: string; h?: string; r?: s
   );
 }
 
-export function SkeletonCard({ children, className }: { children?: React.ReactNode; className?: string }) {
-  return <div className={`skeleton-card ${className || ""}`}>{children}</div>;
+export function SkeletonCard({ children, className, style }: { children?: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+  return <div className={`skeleton-card ${className || ""}`} style={style}>{children}</div>;
 }
 
 /* ── Dashboard skeleton ── */
