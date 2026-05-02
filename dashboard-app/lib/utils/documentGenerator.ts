@@ -6,8 +6,8 @@ import { numberToWordsUz } from "./numberToWordsUz";
 function createFuzzyRegex(text: string) {
     return new RegExp(text.split('').map(c => {
         if (c === ' ') return '\\s*(?:<[^>]*>)*\\s*';
-        if (/[-\/\\^$*+?.()|[\]{}]/.test(c)) return '\\\\' + c + '(?:<[^>]*>)*';
-        return c + '(?:<[^>]*>)*';
+        const escapedChar = c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return escapedChar + '(?:<[^>]*>)*';
     }).join(''), 'g');
 }
 
