@@ -73,7 +73,7 @@ export function CustomSelect({ value, options, onChange, placeholder, className 
           align-items: center;
           justify-content: space-between;
           padding: 12px 16px;
-          background: var(--bg-sidebar);
+          background: var(--bg-card);
           border: 1px solid var(--border);
           border-radius: 12px;
           cursor: pointer;
@@ -84,12 +84,12 @@ export function CustomSelect({ value, options, onChange, placeholder, className 
         }
 
         .custom-select-trigger:hover {
-          border-color: rgba(255, 255, 255, 0.2);
+          border-color: var(--border-strong);
         }
 
         .custom-select-trigger.open {
           border-color: var(--accent);
-          background: rgba(255, 255, 255, 0.05);
+          background: var(--bg-sidebar);
         }
 
         .caret {
@@ -107,14 +107,12 @@ export function CustomSelect({ value, options, onChange, placeholder, className 
           top: calc(100% + 8px);
           left: 0;
           right: 0;
-          background: rgba(20, 20, 20, 0.85);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
+          background: var(--bg-card);
           border: 1px solid var(--border);
           border-radius: 12px;
           padding: 6px;
           z-index: 100;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+          box-shadow: var(--shadow-md);
           max-height: 240px;
           overflow-y: auto;
           animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -130,13 +128,13 @@ export function CustomSelect({ value, options, onChange, placeholder, className 
         }
 
         .custom-select-option:hover {
-          background: rgba(255, 255, 255, 0.05);
+          background: var(--bg-hover);
           color: var(--text-primary);
         }
 
         .custom-select-option.active {
-          background: rgba(255, 255, 255, 0.1);
-          color: var(--text-primary);
+          background: var(--accent-light);
+          color: var(--accent);
           font-weight: 600;
         }
 
