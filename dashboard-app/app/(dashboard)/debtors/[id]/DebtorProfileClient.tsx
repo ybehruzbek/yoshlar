@@ -10,6 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/utils/format";
+import { generateSchedule, ScheduleItem } from "@/lib/utils/schedule";
 
 const UZ_MONTHS = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktyabr", "noyabr", "dekabr"];
 
@@ -33,7 +34,7 @@ const SafeDate = ({ date, format }: { date: string | Date | null; format?: "shor
 
 export function DebtorProfileClient({ debtor }: { debtor: any }) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"loans" | "notes" | "docs">("loans");
+  const [activeTab, setActiveTab] = useState<"loans" | "schedule" | "notes" | "docs">("loans");
 
   const totalLoan = debtor.loans.reduce((a: number, l: any) => a + l.qarzSummasi, 0);
   const totalOverdue = debtor.loans.reduce((a: number, l: any) => a + l.muddatOtganSumma, 0);
@@ -143,6 +144,7 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
             <div className="dp-tabs">
               {[
                 { key: "loans", icon: <CurrencyCircleDollar size={18} />, label: "Shartnomalar", count: debtor.loans.length },
+                { key: "schedule", icon: <Calendar size={18} />, label: "To'lov grafigi" },
                 { key: "notes", icon: <ChatText size={18} />, label: "Eslatmalar", count: debtor.notes.length },
                 { key: "docs", icon: <FileText size={18} />, label: "Hujjatlar" },
               ].map(t => (
@@ -272,6 +274,66 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
                               <CheckCircle size={18} weight="fill" color="var(--green)" />
                             </div>
                           ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Schedule */}
+            {activeTab === "schedule" && (
+              <div className="dp-schedule">
+                {debtor.loans.map((loan: any) => {
+                  const schedule = generateSchedule(
+                    loan.qarzSummasi,
+                    loan.loanType,
+                    loan.shartnomaSana,
+                    loan.payments
+                  );
+                  return (
+                    <div key={loan.id} className="dp-schedule-card">
+                      <div className="dp-sc-head">
+                        <h3>{loan.loanType === '20_yil' ? '20 yillik' : '7 yillik'} kredit jadvali</h3>
+                        {loan.shartnomaSana && <span className="dp-sc-date">Boshlanish: <SafeDate date={loan.shartnomaSana} format="full" /></span>}
+                      </div>
+                      
+                      {schedule.length === 0 ? (
+                        <div className="dp-empty">Jadval tuzish uchun shartnoma sanasi va summa kiritilgan bo'lishi kerak.</div>
+                      ) : (
+                        <div className="dp-table-wrap">
+                          <table className="dp-table">
+                            <thead>
+                              <tr>
+                                <th>Oy</th>
+                                <th>To'lov sanasi</th>
+                                <th className="num">Asosiy qarz</th>
+                                {loan.loanType === '7_yil' && <th className="num">Foiz</th>}
+                                <th className="num">Jami to'lov</th>
+                                <th className="num">To'landi</th>
+                                <th>Holat</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {schedule.map((row: ScheduleItem) => (
+                                <tr key={row.monthIndex} className={row.status === 'overdue' ? 'row-danger' : row.status === 'paid' ? 'row-success' : ''}>
+                                  <td>{row.monthIndex}</td>
+                                  <td><SafeDate date={row.date} /></td>
+                                  <td className="num">{formatMoney(row.principal)}</td>
+                                  {loan.loanType === '7_yil' && <td className="num">{formatMoney(row.interest)}</td>}
+                                  <td className="num bold">{formatMoney(row.total)}</td>
+                                  <td className={`num ${row.paid > 0 ? 'text-green' : ''}`}>{formatMoney(row.paid)}</td>
+                                  <td>
+                                    {row.status === 'paid' && <span className="badge badge-green">To'langan</span>}
+                                    {row.status === 'partial' && <span className="badge badge-yellow">Qisman</span>}
+                                    {row.status === 'overdue' && <span className="badge badge-red">Kechikkan</span>}
+                                    {row.status === 'pending' && <span className="badge badge-gray">Kutilmoqda</span>}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       )}
                     </div>
@@ -477,6 +539,22 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
         .dp-docs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
         .dp-doc-add { border: 2px dashed var(--border); border-radius: 16px; padding: 36px; display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--text-tertiary); cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
         .dp-doc-add:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ── Schedule ── */
+        .dp-schedule-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; margin-bottom: 24px; }
+        .dp-sc-head { padding: 20px 28px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .dp-sc-head h3 { font-size: 15px; font-weight: 700; }
+        .dp-sc-date { font-size: 13px; color: var(--text-tertiary); font-weight: 500; }
+        .dp-table-wrap { overflow-x: auto; max-height: 500px; overflow-y: auto; }
+        .dp-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+        .dp-table th { position: sticky; top: 0; background: var(--bg-sidebar); padding: 12px 20px; font-weight: 600; color: var(--text-secondary); border-bottom: 1px solid var(--border); z-index: 10; }
+        .dp-table td { padding: 12px 20px; border-bottom: 1px solid var(--border); color: var(--text-primary); }
+        .dp-table tr:last-child td { border-bottom: none; }
+        .dp-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .dp-table th.num, .dp-table td.num { text-align: right; font-family: 'SF Mono', 'Menlo', monospace; letter-spacing: -0.2px; }
+        .dp-table td.bold { font-weight: 700; }
+        .dp-table tr.row-danger td { background: rgba(255, 59, 48, 0.05); }
+        .dp-table tr.row-success td { background: rgba(52, 199, 89, 0.05); }
 
         @media (max-width: 900px) {
           .dp-hero-grid { grid-template-columns: 1fr; }
