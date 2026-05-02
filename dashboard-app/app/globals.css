@@ -1301,8 +1301,8 @@ tr:hover td { background: var(--tr-hover); }
 
 .login-input {
   width: 100%;
-  background: var(--bg);
-  border: 1px solid var(--border);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   padding: 12px 14px 12px 42px;
   font-family: inherit;
@@ -1319,8 +1319,16 @@ tr:hover td { background: var(--tr-hover); }
 .login-input:focus {
   outline: none;
   border-color: var(--accent);
-  background: var(--bg-card);
+  background: var(--bg-hover);
   box-shadow: 0 0 0 4px var(--accent-light);
+}
+
+.login-input:-webkit-autofill,
+.login-input:-webkit-autofill:hover,
+.login-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-hover) inset;
+  -webkit-text-fill-color: var(--text-primary);
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 .login-input:disabled {
