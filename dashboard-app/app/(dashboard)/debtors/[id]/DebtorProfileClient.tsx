@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/utils/format";
 import { generateSchedule, ScheduleItem } from "@/lib/utils/schedule";
 import { addPayment } from "@/lib/actions/addPayment";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 const UZ_MONTHS = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktyabr", "noyabr", "dekabr"];
 
@@ -442,11 +443,14 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
               {debtor.loans.length > 1 && (
                 <div className="form-group">
                   <label>Shartnoma</label>
-                  <select value={paymentForm.loanId} onChange={e => setPaymentForm({...paymentForm, loanId: Number(e.target.value)})}>
-                    {debtor.loans.map((l: any) => (
-                      <option key={l.id} value={l.id}>{l.loanType === '20_yil' ? '20 yillik' : '7 yillik'} ({formatMoney(l.qarzSummasi)})</option>
-                    ))}
-                  </select>
+                  <CustomSelect 
+                    value={paymentForm.loanId} 
+                    onChange={v => setPaymentForm({...paymentForm, loanId: Number(v)})}
+                    options={debtor.loans.map((l: any) => ({
+                      value: l.id,
+                      label: `${l.loanType === '20_yil' ? '20 yillik' : '7 yillik'} (${formatMoney(l.qarzSummasi)})`
+                    }))}
+                  />
                 </div>
               )}
               
@@ -474,11 +478,15 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
                 </div>
                 <div className="form-group">
                   <label>Usul</label>
-                  <select value={paymentForm.usul} onChange={e => setPaymentForm({...paymentForm, usul: e.target.value})}>
-                    <option value="bank">Bank</option>
-                    <option value="payme">Payme/Click</option>
-                    <option value="naqd">Naqd pul</option>
-                  </select>
+                  <CustomSelect 
+                    value={paymentForm.usul} 
+                    onChange={v => setPaymentForm({...paymentForm, usul: v})}
+                    options={[
+                      { value: "bank", label: "Bank" },
+                      { value: "payme", label: "Payme/Click" },
+                      { value: "naqd", label: "Naqd pul" }
+                    ]}
+                  />
                 </div>
               </div>
 

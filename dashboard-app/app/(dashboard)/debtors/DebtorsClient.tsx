@@ -1,5 +1,7 @@
 "use client";
 
+import { CustomSelect } from "@/components/ui/CustomSelect";
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { 
   MagnifyingGlass, Funnel, CaretDown, DotsThreeVertical,
@@ -313,27 +315,33 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
         <div className="filter-group">
           <div className="filter-item">
             <span className="filter-label">Holat:</span>
-            <div className="select-wrap">
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                <option>Barchasi</option>
-                <option>Faol</option>
-                <option>Kechikkan</option>
-                <option>Sudda</option>
-                <option>Tolangan</option>
-              </select>
-              <CaretDown size={14} className="select-caret" />
+            <div style={{ width: 140 }}>
+              <CustomSelect 
+                value={statusFilter} 
+                onChange={setStatusFilter}
+                options={[
+                  { value: "Barchasi", label: "Barchasi" },
+                  { value: "Faol", label: "Faol" },
+                  { value: "Kechikkan", label: "Kechikkan" },
+                  { value: "Sudda", label: "Sudda" },
+                  { value: "Tolangan", label: "To'langan" }
+                ]}
+              />
             </div>
           </div>
 
           <div className="filter-item">
             <span className="filter-label">Tur:</span>
-            <div className="select-wrap">
-              <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-                <option>Barchasi</option>
-                <option>20 yillik</option>
-                <option>7 yillik</option>
-              </select>
-              <CaretDown size={14} className="select-caret" />
+            <div style={{ width: 140 }}>
+              <CustomSelect 
+                value={typeFilter} 
+                onChange={setTypeFilter}
+                options={[
+                  { value: "Barchasi", label: "Barchasi" },
+                  { value: "20 yillik", label: "20 yillik" },
+                  { value: "7 yillik", label: "7 yillik" }
+                ]}
+              />
             </div>
           </div>
         </div>
