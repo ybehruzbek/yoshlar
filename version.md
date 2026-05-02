@@ -33,6 +33,37 @@
 
 ## Versiya tarixi
 
+### v0.4.0 — Auth tizimi: Login, Logout, Route Protection (2026-05-03)
+
+**Nima qilindi:**
+- ✅ **Login sahifasi** (`/login`) — premium glassmorphism dizayn, animated background, logo, statistikalar
+- ✅ **NextAuth v5** — Credentials provider, JWT session strategy
+- ✅ **Route protection** — `proxy.ts` (Next.js 16 formati) orqali barcha sahifalar himoyalangan
+- ✅ **Authorized callback** — login bo'lmaganlar `/login` ga redirect, kirganlar `/login` dan `/ `ga redirect
+- ✅ **Sidebar user menu** — haqiqiy foydalanuvchi nomi va roli ko'rsatiladi (useSession)
+- ✅ **Logout tugmasi** — sidebar footer da `signOut` bilan chiqish
+- ✅ **Seed script** — PostgreSQL uchun tuzatildi, admin + operator yaratildi
+- ✅ **SessionProvider** — `layout.tsx` ga qo'shildi
+- ✅ **auth.ts** — PrismaAdapter olib tashlandi (Credentials bilan kerak emas), dynamic import (edge runtime uchun)
+- GitHub ga push qilindi: commit `cf1639b`
+
+**Login ma'lumotlari:**
+- Admin: `admin@yoshlar.uz` / `admin123`
+- Operator: `operator@yoshlar.uz` / `operator123`
+
+**Rollar:** admin, operator, viewer
+
+**Yaratilgan/o'zgartirilgan fayllar:**
+- `app/login/page.tsx` — [YANGI] Login sahifasi UI
+- `proxy.ts` — [YANGI] Route protection (eski middleware.ts o'rniga)
+- `auth.ts` — Qayta yozildi (dynamic import, authorized callback)
+- `app/layout.tsx` — SessionProvider qo'shildi
+- `components/layout/Sidebar.tsx` — useSession, logout, user menu
+- `prisma/seed.ts` — PostgreSQL adapter bilan, admin + operator
+- `app/globals.css` — Login CSS, user menu CSS qo'shildi
+
+---
+
 ### v0.3.0 — PostgreSQL migratsiya (2026-05-03)
 
 **Nima qilindi:**
@@ -92,7 +123,9 @@
 ## Qolgan ishlar (TODO)
 
 ### Ustuvorlik 1 — Asosiy funksionallik
-- [ ] Login sahifasi UI
+- [x] Login sahifasi UI ✅ v0.4.0
+- [x] Route protection (proxy.ts) ✅ v0.4.0
+- [x] Session boshqaruvi (useSession, logout) ✅ v0.4.0
 - [ ] To'lovlar sahifasi (`/payments`) — jadval, filtr, yuklab olish
 - [ ] Hujjatlar markazi (`/documents`) — shablon tanlash, hujjat yaratish (Word/PDF)
 - [ ] Qarzdor profili: to'lov jadvali avtomatik hisoblash (20 yil / 7 yil)
@@ -129,5 +162,5 @@ Connection: postgresql://postgres:3785@localhost:5432/yoshlar_db
 ```
 Remote: https://github.com/ybehruzbek/yoshlar.git
 Branch: main
-Oxirgi commit: ba4110e (chore: migrate from SQLite to PostgreSQL)
+Oxirgi commit: cf1639b (feat: login/logout, route protection)
 ```
