@@ -13,6 +13,7 @@ import { formatMoney } from "@/lib/utils/format";
 import { generateSchedule, ScheduleItem } from "@/lib/utils/schedule";
 import { addPayment } from "@/lib/actions/addPayment";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { CustomDatePicker } from "@/components/ui/CustomDatePicker";
 
 const UZ_MONTHS = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktyabr", "noyabr", "dekabr"];
 
@@ -474,7 +475,10 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
               <div className="form-row">
                 <div className="form-group">
                   <label>Sana</label>
-                  <input type="date" required value={paymentForm.tolovSana} onChange={e => setPaymentForm({...paymentForm, tolovSana: e.target.value})} />
+                  <CustomDatePicker 
+                    value={paymentForm.tolovSana} 
+                    onChange={v => setPaymentForm({...paymentForm, tolovSana: v})} 
+                  />
                 </div>
                 <div className="form-group">
                   <label>Usul</label>
@@ -483,8 +487,7 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
                     onChange={v => setPaymentForm({...paymentForm, usul: v})}
                     options={[
                       { value: "bank", label: "Bank" },
-                      { value: "payme", label: "Payme/Click" },
-                      { value: "naqd", label: "Naqd pul" }
+                      { value: "payme", label: "Payme/Click" }
                     ]}
                   />
                 </div>
