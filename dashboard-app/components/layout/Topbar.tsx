@@ -2,14 +2,27 @@
 
 import { Bell, Moon, Sun } from "@phosphor-icons/react";
 
+import { usePathname } from "next/navigation";
 import { useTheme } from "../../context/ThemeContext";
 
-interface TopbarProps {
-  title: string;
-}
+const TITLE_MAP: Record<string, string> = {
+  "/": "Bosh sahifa",
+  "/debtors": "Qarzdorlar",
+  "/payments": "To'lovlar",
+  "/documents": "Hujjatlar",
+  "/court": "Sud bo'limi",
+  "/calendar": "Kalendar",
+  "/reports": "Hisobotlar",
+  "/kpi": "KPI",
+};
 
-export function Topbar({ title }: TopbarProps) {
+export function Topbar() {
   const { theme, toggleTheme } = useTheme();
+  const pathname = usePathname();
+  
+  // Extract base path to match with TITLE_MAP (e.g., /debtors/123 -> /debtors)
+  const basePath = pathname === "/" ? "/" : `/${pathname.split('/')[1]}`;
+  const title = TITLE_MAP[basePath] || "Dashboard";
 
   return (
     <div className="topbar">

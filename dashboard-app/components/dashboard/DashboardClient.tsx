@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import {
   WarningCircle, CaretRight, FileText, Eye
 } from "@phosphor-icons/react";
@@ -109,7 +108,7 @@ export function DashboardClient({ data }: { data: DashboardProps }) {
   const chartMax = maxPayment * 1.1;
 
   return (
-    <DashboardLayout title="Bosh sahifa">
+    <>
       {/* ── Alert ── */}
       {data.courtActiveCount > 0 && (
         <div className="alert-bar">
@@ -307,6 +306,6 @@ export function DashboardClient({ data }: { data: DashboardProps }) {
           </table>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

@@ -1,8 +1,7 @@
-import { DashboardLayout } from "../../components/layout/DashboardLayout";
 
 export default function ReportsPage() {
   return (
-    <DashboardLayout title="Hisobotlar">
+    <>
       <div className="card">
         <div className="card-head">
           <div>
@@ -14,6 +13,6 @@ export default function ReportsPage() {
           Tizimning umumiy samaradorligi va tushumlar to'g'risidagi hisobotlar.
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

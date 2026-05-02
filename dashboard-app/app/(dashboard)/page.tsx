@@ -1,5 +1,5 @@
-import { prisma } from "../lib/prisma";
-import { DashboardClient, DashboardProps } from "../components/dashboard/DashboardClient";
+import { prisma } from "../../lib/prisma";
+import { DashboardClient, DashboardProps } from "../../components/dashboard/DashboardClient";
 import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
 
 export const dynamic = 'force-dynamic';

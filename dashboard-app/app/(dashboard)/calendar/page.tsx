@@ -1,19 +1,18 @@
-import { DashboardLayout } from "../../components/layout/DashboardLayout";
 
-export default function DocumentsPage() {
+export default function CalendarPage() {
   return (
-    <DashboardLayout title="Hujjatlar">
+    <>
       <div className="card">
         <div className="card-head">
           <div>
-            <div className="card-title">Hujjatlar markazi</div>
+            <div className="card-title">To'lovlar kalendari</div>
             <div className="card-sub">Ushbu sahifa tez kunda to'liq ishga tushadi</div>
           </div>
         </div>
         <div style={{ padding: "40px", textAlign: "center", color: "var(--text-secondary)" }}>
-          Shablonlar va avtomatik ravishda tayyorlangan sud hujjatlari shu yerda saqlanadi.
+          Rejalashtirilgan to'lovlar va muhim sanalar shu kalendarda ko'rsatiladi.
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

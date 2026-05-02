@@ -1,19 +1,18 @@
-import { DashboardLayout } from "../../components/layout/DashboardLayout";
 
-export default function CourtPage() {
+export default function DocumentsPage() {
   return (
-    <DashboardLayout title="Sud bo'limi">
+    <>
       <div className="card">
         <div className="card-head">
           <div>
-            <div className="card-title">Sud jarayonidagi ishlar</div>
+            <div className="card-title">Hujjatlar markazi</div>
             <div className="card-sub">Ushbu sahifa tez kunda to'liq ishga tushadi</div>
           </div>
         </div>
         <div style={{ padding: "40px", textAlign: "center", color: "var(--text-secondary)" }}>
-          Sudga o'tkazilgan ishlar ro'yxati va ularning statuslarini boshqarish bo'limi.
+          Shablonlar va avtomatik ravishda tayyorlangan sud hujjatlari shu yerda saqlanadi.
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

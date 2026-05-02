@@ -1,17 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { 
   MagnifyingGlass, Funnel, CaretDown, DotsThreeVertical,
   User as UserIcon, Phone, ArrowRight, CheckCircle, Clock, Warning,
   FilePlus, FileText, Bell, FileArrowDown, CloudArrowUp, Trash, PencilSimple
 } from "@phosphor-icons/react";
 import * as XLSX from "xlsx";
-import { formatMoney } from "../../lib/utils/format";
-import { previewDebtorsExcel, commitDebtorsImport } from "../../lib/actions/import";
-import { fetchDebtorsPaginated } from "../../lib/actions/fetchDebtors";
-import { deleteDebtor, deleteAllDebtors } from "../../lib/actions/debtors";
+import { formatMoney } from "../../../lib/utils/format";
+import { previewDebtorsExcel, commitDebtorsImport } from "../../../lib/actions/import";
+import { fetchDebtorsPaginated } from "../../../lib/actions/fetchDebtors";
+import { deleteDebtor, deleteAllDebtors } from "../../../lib/actions/debtors";
 import { useRouter } from "next/navigation";
 
 export interface DebtorItem {
@@ -253,7 +252,7 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
   };
 
   return (
-    <DashboardLayout title="Qarzdorlar">
+    <>
       {/* ── Header ── */}
       <div className="page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div className="header-info">
@@ -586,6 +585,6 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }

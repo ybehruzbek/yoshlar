@@ -1,8 +1,7 @@
-import { DashboardLayout } from "../../components/layout/DashboardLayout";
 
 export default function KpiPage() {
   return (
-    <DashboardLayout title="KPI">
+    <>
       <div className="card">
         <div className="card-head">
           <div>
@@ -14,6 +13,6 @@ export default function KpiPage() {
           Ish xodimlarining natijalari va samaradorlik ko'rsatkichlari.
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

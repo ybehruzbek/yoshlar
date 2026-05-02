@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { 
   Phone, MapPin, IdentificationCard, Calendar, 
   CurrencyCircleDollar, Warning, CheckCircle, 
@@ -53,7 +52,7 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
   };
 
   return (
-    <DashboardLayout title="Qarzdor Profili">
+    <>
       <div className="dp">
         {/* Back */}
         <div className="dp-top">
@@ -484,6 +483,6 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
           .dp-grid { grid-template-columns: 1fr; }
         }
       `}</style>
-    </DashboardLayout>
+    </>
   );
 }

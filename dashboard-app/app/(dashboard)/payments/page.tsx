@@ -1,8 +1,7 @@
-import { DashboardLayout } from "../../components/layout/DashboardLayout";
 
 export default function PaymentsPage() {
   return (
-    <DashboardLayout title="To'lovlar">
+    <>
       <div className="card">
         <div className="card-head">
           <div>
@@ -14,6 +13,6 @@ export default function PaymentsPage() {
           Bank va Payme orqali kelib tushgan to'lovlarni kuzatish va tasdiqlash vositalari shu yerda joylashadi.
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

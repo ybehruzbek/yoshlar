@@ -1,19 +1,18 @@
-import { DashboardLayout } from "../../components/layout/DashboardLayout";
 
-export default function CalendarPage() {
+export default function CourtPage() {
   return (
-    <DashboardLayout title="Kalendar">
+    <>
       <div className="card">
         <div className="card-head">
           <div>
-            <div className="card-title">To'lovlar kalendari</div>
+            <div className="card-title">Sud jarayonidagi ishlar</div>
             <div className="card-sub">Ushbu sahifa tez kunda to'liq ishga tushadi</div>
           </div>
         </div>
         <div style={{ padding: "40px", textAlign: "center", color: "var(--text-secondary)" }}>
-          Rejalashtirilgan to'lovlar va muhim sanalar shu kalendarda ko'rsatiladi.
+          Sudga o'tkazilgan ishlar ro'yxati va ularning statuslarini boshqarish bo'limi.
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

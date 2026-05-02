@@ -1,13 +1,13 @@
 import { ReactNode } from "react";
-import { Sidebar } from "./Sidebar";
-import { Topbar } from "./Topbar";
+import { Sidebar } from "../../components/layout/Sidebar";
+import { Topbar } from "../../components/layout/Topbar";
 
-export function DashboardLayout({ children, title }: { children: ReactNode, title: string }) {
+export default function DashboardLayoutWrapper({ children }: { children: ReactNode }) {
   return (
     <div className="layout">
       <Sidebar />
       <main className="main">
-        <Topbar title={title} />
+        <Topbar />
         <div className="content">
           {children}
         </div>
