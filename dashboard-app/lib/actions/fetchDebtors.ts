@@ -58,7 +58,7 @@ export async function fetchDebtorsPaginated({ page, search, status, type }: Fetc
   });
 
   // Group by debtor (avoid duplicates)
-  const debtorMap = new Map<string, any>();
+  const debtorMap = new Map<number, any>();
   
   for (const loan of loans) {
     const paidForLoan = loan.payments.reduce((acc, p) => acc + p.summa, 0);

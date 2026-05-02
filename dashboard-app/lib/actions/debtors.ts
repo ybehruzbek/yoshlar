@@ -3,7 +3,7 @@
 import { prisma } from "../prisma";
 import { revalidatePath } from "next/cache";
 
-export async function deleteDebtor(id: string) {
+export async function deleteDebtor(id: number) {
   try {
     await prisma.debtor.delete({
       where: { id }

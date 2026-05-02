@@ -14,7 +14,7 @@ import { deleteDebtor, deleteAllDebtors } from "../../../lib/actions/debtors";
 import { useRouter } from "next/navigation";
 
 export interface DebtorItem {
-  id: string;
+  id: number;
   fish: string;
   telefon: string | null;
   loanType: string;
@@ -54,7 +54,7 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
   const [isLoading, setIsLoading] = useState(false);
   const [importResult, setImportResult] = useState<any>(null);
   const [previewData, setPreviewData] = useState<any[] | null>(null);
-  const [activeRowId, setActiveRowId] = useState<string | null>(null);
+  const [activeRowId, setActiveRowId] = useState<number | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -137,7 +137,7 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
   }, []);
 
   // ── Handlers ──
-  const handleRowActionClick = (e: React.MouseEvent, id: string) => {
+  const handleRowActionClick = (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
     setActiveRowId(activeRowId === id ? null : id);
   };
@@ -150,7 +150,7 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
     setSelectedFile(null);
   };
 
-  const handleDelete = async (id: string, name: string) => {
+  const handleDelete = async (id: number, name: string) => {
     if (confirm(`Haqiqatan ham "${name}" ni o'chirib yubormoqchimisiz?`)) {
       const res = await deleteDebtor(id);
       if (res.success) {
@@ -162,7 +162,7 @@ export function DebtorsClient({ initialDebtors, totalCount }: DebtorsClientProps
     }
   };
 
-  const handleViewProfile = (id: string) => router.push(`/debtors/${id}`);
+  const handleViewProfile = (id: number) => router.push(`/debtors/${id}`);
 
   const handleDeleteAll = async () => {
     setIsActionMenuOpen(false);

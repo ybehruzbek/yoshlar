@@ -7,7 +7,8 @@ interface PageProps {
 }
 
 export default async function DebtorProfilePage({ params }: PageProps) {
-  const { id } = await params;
+  const { id: idStr } = await params;
+  const id = parseInt(idStr, 10);
 
   const debtor = await prisma.debtor.findUnique({
     where: { id },

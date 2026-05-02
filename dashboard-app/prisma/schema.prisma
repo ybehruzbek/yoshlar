@@ -7,7 +7,7 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(cuid())
+  id           Int        @id @default(autoincrement())
   name         String?
   email        String     @unique
   passwordHash String
@@ -20,7 +20,7 @@ model User {
 }
 
 model Debtor {
-  id           String    @id @default(cuid())
+  id           Int        @id @default(autoincrement())
   tartibRaqam  Int?
   fish         String
   manzil       String?
@@ -37,8 +37,8 @@ model Debtor {
 }
 
 model Loan {
-  id               String         @id @default(cuid())
-  debtorId         String
+  id           Int        @id @default(autoincrement())
+  debtorId     Int
   loanType         String
   qarzSummasi      Float
   qarzMatnda       String?
@@ -61,8 +61,8 @@ model Loan {
 }
 
 model LoanSchedule {
-  id        String   @id @default(cuid())
-  loanId    String
+  id           Int        @id @default(autoincrement())
+  loanId       Int
   oyRaqam   Int
   tolovSana DateTime
   asosiy    Float
@@ -70,13 +70,13 @@ model LoanSchedule {
   jami      Float
   qoldiq    Float
   tolandi   Boolean  @default(false)
-  paymentId String?
+  paymentId    Int?
   payment   Payment? @relation(fields: [paymentId], references: [id])
   loan      Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
 }
 
 model PaymentBatch {
-  id            String    @id @default(cuid())
+  id           Int        @id @default(autoincrement())
   faylNomi      String
   yuklanganSana DateTime  @default(now())
   jami          Int       @default(0)
@@ -88,14 +88,14 @@ model PaymentBatch {
 }
 
 model Payment {
-  id         String         @id @default(cuid())
-  loanId     String
+  id           Int        @id @default(autoincrement())
+  loanId       Int
   summa      Float
   tolovSana  DateTime
   usul       String
   maqsad     String?
   kimKiritdi String?
-  batchId    String?
+  batchId      Int?
   createdAt  DateTime       @default(now())
   schedules  LoanSchedule[]
   batch      PaymentBatch?  @relation(fields: [batchId], references: [id])
@@ -103,7 +103,7 @@ model Payment {
 }
 
 model Template {
-  id            String     @id @default(cuid())
+  id           Int        @id @default(autoincrement())
   nomi          String
   turi          String
   kontent       String
@@ -114,10 +114,10 @@ model Template {
 }
 
 model Document {
-  id            String    @id @default(cuid())
-  loanId        String
+  id           Int        @id @default(autoincrement())
+  loanId       Int
   hujjatTuri    String
-  shablonId     String?
+  shablonId    Int?
   faylYoli      String?
   generatedData String?
   holat         String    @default("yaratilgan")
@@ -129,9 +129,9 @@ model Document {
 }
 
 model Note {
-  id          String    @id @default(cuid())
-  debtorId    String
-  userId      String?
+  id           Int        @id @default(autoincrement())
+  debtorId     Int
+  userId       Int?
   matn        String
   eslatmaSana DateTime?
   isEslatma   Boolean   @default(false)
@@ -141,10 +141,10 @@ model Note {
 }
 
 model Warning {
-  id         String    @id @default(cuid())
-  loanId     String
-  userId     String?
-  documentId String?
+  id           Int        @id @default(autoincrement())
+  loanId       Int
+  userId       Int?
+  documentId   Int?
   turi       String
   sana       DateTime  @default(now())
   raqami     String?
@@ -156,8 +156,8 @@ model Warning {
 }
 
 model SmsLog {
-  id             String   @id @default(cuid())
-  debtorId       String
+  id           Int        @id @default(autoincrement())
+  debtorId     Int
   telefon        String
   matn           String
   sabab          String
@@ -168,8 +168,8 @@ model SmsLog {
 }
 
 model AuditLog {
-  id          String   @id @default(cuid())
-  userId      String?
+  id           Int        @id @default(autoincrement())
+  userId       Int?
   amal        String
   model       String
   modelId     String?
@@ -181,7 +181,7 @@ model AuditLog {
 }
 
 model PenaltySetting {
-  id           String   @id @default(cuid())
+  id           Int        @id @default(autoincrement())
   loanType     String   @unique
   stavkaYillik Float
   faol         Boolean  @default(true)

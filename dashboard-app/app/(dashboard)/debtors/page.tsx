@@ -14,7 +14,7 @@ export default async function DebtorsPage() {
     take: 60,
   });
 
-  const debtorMap = new Map<string, any>();
+  const debtorMap = new Map<number, any>();
   for (const loan of loans) {
     const paidForLoan = loan.payments.reduce((acc, p) => acc + p.summa, 0);
     const existing = debtorMap.get(loan.debtor.id);
