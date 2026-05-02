@@ -50,6 +50,24 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
       const qoldiq = loan ? Math.max(0, loan.qarzSummasi - loan.payments.reduce((s: number, p: any) => s + p.summa, 0)) : 0;
       const oylikTolov = loan ? (loan.loanType === '20_yil' ? Math.round(qarzSummasi / 240) : Math.round(qarzSummasi / 84)) : 0;
 
+      // Legal calculations
+      const shartnomaSanaObj = loan?.shartnomaSana ? new Date(loan.shartnomaSana) : new Date();
+      const otkazilganSanaObj = new Date(shartnomaSanaObj);
+      otkazilganSanaObj.setDate(otkazilganSanaObj.getDate() + 5);
+      
+      const tolovBoshlanishSanaObj = new Date(shartnomaSanaObj);
+      tolovBoshlanishSanaObj.setMonth(tolovBoshlanishSanaObj.getMonth() + 1);
+
+      const formatDate = (date: Date) => {
+        const months = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentyabr", "oktyabr", "noyabr", "dekabr"];
+        return `${date.getFullYear()}-yil ${date.getDate()}-${months[date.getMonth()]}`;
+      };
+
+      const warnings = loan?.warnings || [];
+      const warningDatesText = warnings.length > 0 
+        ? warnings.map((w: any) => formatDate(new Date(w.sana))).join(", ") + " sanalari"
+        : "_______________ sanalari";
+
       const data = {
         FISH: (debtor.fish || "F.I.SH").toUpperCase(),
         FISH_NORMAL: debtor.fish || "F.I.SH",
@@ -57,14 +75,27 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
         JSHSHIR: debtor.jshshir || "",
         MANZIL: debtor.manzil || "",
         TELEFON: debtor.telefon || "",
+        
         QARZ_SUMMASI: formatMoney(qarzSummasi),
-        QARZ_SUMMA_SOZ: qarzSummasi, // Backend will convert to words
+        QARZ_SUMMA_SOZ: qarzSummasi.toString(), // Backend converts
         QARZ_QOLDIQ: formatMoney(qoldiq),
-        QOLDIQ_SOZ: qoldiq, // Backend will convert to words
+        QOLDIQ_SOZ: qoldiq.toString(), // Backend converts
         OYLIK_TOLOV: formatMoney(oylikTolov),
-        OYLIK_TOLOV_SOZ: oylikTolov, // Backend will convert to words
-        SANA: new Date().toLocaleDateString('ru-RU'),
-        SHARTNOMA_RAQAMI: loan?.id ? `2019000${loan.id}-son` : "___-son",
+        OYLIK_TOLOV_SOZ: oylikTolov.toString(), // Backend converts
+        
+        // Comprehensive specific fields
+        SHARTNOMA_SANA: formatDate(shartnomaSanaObj),
+        NOTARIUS_IDORASI: "Toshkent shahar davlat notarial idorasi",
+        NOTARIUS: loan?.notarius || "________________",
+        SHARTNOMA_RAQAMI: loan?.reestrRaqam || (loan?.id ? `2019000${loan.id}` : "_________"),
+        QARZ_MUDDATI: loan?.loanType === '20_yil' ? "20 (yigirma)" : "10 (o'n)",
+        OTKAZILGAN_SANA: formatDate(otkazilganSanaObj),
+        BANK_FILIALI: "ATIB “Ipoteka banki” Yashnobod filialida",
+        TOLOV_BOSHLANISH_SANA: formatDate(tolovBoshlanishSanaObj),
+        HOLAT_SANASI: loan?.holatSanasi ? formatDate(new Date(loan.holatSanasi)) : formatDate(new Date()),
+        OGOHLANTIRISH_XATLARI: warningDatesText,
+        TALABNOMA_SANA: formatDate(new Date()),
+        BUGUNGI_SANA: formatDate(new Date()),
       };
 
       const res = await fetch("/api/documents/generate", {
