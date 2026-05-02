@@ -39,7 +39,48 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"loans" | "schedule" | "notes" | "docs">("loans");
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const handleGenerateDocument = async (templateName: string) => {
+    setIsGenerating(templateName);
+    try {
+      const loan = debtor.loans[0];
+      const data = {
+        FISH: debtor.fish || "F.I.SH",
+        PASPORT: debtor.pasport || "",
+        JSHSHIR: debtor.jshshir || "",
+        MANZIL: debtor.manzil || "",
+        TELEFON: debtor.telefon || "",
+        QARZ_SUMMASI: loan ? formatMoney(loan.qarzSummasi) : "0",
+        QARZ_QOLDIQ: loan ? formatMoney(Math.max(0, loan.qarzSummasi - loan.payments.reduce((s: number, p: any) => s + p.summa, 0))) : "0",
+        OYLIK_TOLOV: loan ? "285 791" : "0",
+      };
+
+      const res = await fetch("/api/documents/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ templateName, data })
+      });
+
+      if (!res.ok) throw new Error("Generatsiyada xatolik yuz berdi");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${templateName.replace('.docx', '')}_${debtor.fish || 'hujjat'}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert("Hujjat yaratishda xatolik yuz berdi. Shablon fayl borligiga ishonch hosil qiling.");
+    } finally {
+      setIsGenerating(null);
+    }
+  };
+
   const [paymentForm, setPaymentForm] = useState({
     loanId: debtor.loans[0]?.id || 0,
     summa: "",
@@ -413,16 +454,17 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
                 <button onClick={() => setIsPaymentModalOpen(true)} className="btn-pay" style={{ background: 'var(--green)', color: '#fff', border: 'none' }}>
                   <CreditCard size={18} /> To'lov kiritish
                 </button>
-                <button><Warning size={18} /> Sudga ariza tayyorlash</button>
-                <button><Envelope size={18} /> SMS xabarnoma yuborish</button>
+                <button onClick={() => handleGenerateDocument("Da'vo ariza.docx")} disabled={!!isGenerating}>
+                  <Warning size={18} /> {isGenerating === "Da'vo ariza.docx" ? "Tayyorlanmoqda..." : "Sudga ariza tayyorlash"}
+                </button>
+                <button onClick={() => handleGenerateDocument("Talabnoma uy-joy.docx")} disabled={!!isGenerating}>
+                  <Envelope size={18} /> {isGenerating === "Talabnoma uy-joy.docx" ? "Tayyorlanmoqda..." : "Talabnoma yuborish"}
+                </button>
                 <button onClick={() => setActiveTab('schedule')}><Clock size={18} /> To'lov grafigini ko'rish</button>
                 <button><FileText size={18} /> Hujjat generatsiya</button>
               </div>
             </div>
 
-
-
-            {/* Quick info */}
             <div className="dp-side-card">
               <h3>Tizim ma'lumoti</h3>
               <div className="dp-info-rows">
