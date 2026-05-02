@@ -28,7 +28,7 @@ export function generateSchedule(
   
   // Calculate fixed principal per month
   const fixedPrincipalRaw = loanAmount / months;
-  const fixedPrincipal = Math.floor(fixedPrincipalRaw * 100) / 100;
+  const fixedPrincipal = Math.round(fixedPrincipalRaw * 100) / 100;
   
   const firstMonthPrincipal = loanAmount - (fixedPrincipal * (months - 1));
   

@@ -308,6 +308,7 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
                               <tr>
                                 <th>Oy</th>
                                 <th>To'lov sanasi</th>
+                                <th className="num">Qoldiq qarz</th>
                                 <th className="num">Asosiy qarz</th>
                                 {loan.loanType === '7_yil' && <th className="num">Foiz</th>}
                                 <th className="num">Jami to'lov</th>
@@ -320,6 +321,7 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
                                 <tr key={row.monthIndex} className={row.status === 'overdue' ? 'row-danger' : row.status === 'paid' ? 'row-success' : ''}>
                                   <td>{row.monthIndex}</td>
                                   <td><SafeDate date={row.date} /></td>
+                                  <td className="num">{formatMoney(row.remainingPrincipal + row.principal)}</td>
                                   <td className="num">{formatMoney(row.principal)}</td>
                                   {loan.loanType === '7_yil' && <td className="num">{formatMoney(row.interest)}</td>}
                                   <td className="num bold">{formatMoney(row.total)}</td>
