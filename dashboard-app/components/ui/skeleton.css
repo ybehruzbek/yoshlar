@@ -1,0 +1,73 @@
+/* ═══════════ SKELETON LOADING ═══════════ */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-hover) 25%,
+    var(--border) 50%,
+    var(--bg-hover) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Dashboard skeleton */
+.skel-dashboard {
+  animation: fadeIn 0.3s ease;
+}
+
+.skel-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.skel-donut-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+/* Debtors skeleton */
+.skel-debtors {
+  animation: fadeIn 0.3s ease;
+}
+
+.skel-table-head {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.skel-table-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.skel-table-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Generic page skeleton */
+.skel-page {
+  animation: fadeIn 0.3s ease;
+}
