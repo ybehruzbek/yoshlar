@@ -53,6 +53,10 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
   const totalPaid = debtor.loans.reduce((a: number, l: any) => a + l.payments.reduce((s: number, p: any) => s + p.summa, 0), 0);
   const avgRisk = Math.round(debtor.loans.reduce((a: number, l: any) => a + l.riskScore, 0) / (debtor.loans.length || 1));
 
+  const selectedLoan = debtor.loans.find((l: any) => l.id === paymentForm.loanId) || debtor.loans[0];
+  const paidForLoan = selectedLoan?.payments ? selectedLoan.payments.reduce((sum: number, p: any) => sum + p.summa, 0) : 0;
+  const maxPayable = selectedLoan ? Math.max(0, selectedLoan.qarzSummasi - paidForLoan) : 0;
+
   const getStatusBadge = (status: string) => {
     const map: Record<string, { cls: string; label: string }> = {
       faol: { cls: "badge-green", label: "Faol" },
@@ -456,7 +460,15 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
               )}
               
               <div className="form-group">
-                <label>To'lov summasi</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label>To'lov summasi</label>
+                  <span 
+                    style={{ fontSize: '12px', color: 'var(--accent)', cursor: 'pointer', fontWeight: 600 }}
+                    onClick={() => setPaymentForm({...paymentForm, summa: maxPayable.toLocaleString()})}
+                  >
+                    Maksimal: {formatMoney(maxPayable)}
+                  </span>
+                </div>
                 <div className="input-wrap">
                   <input 
                     type="text" 
@@ -464,8 +476,9 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
                     placeholder="Masalan: 1 500 000"
                     value={paymentForm.summa} 
                     onChange={e => {
-                      const val = e.target.value.replace(/[^0-9]/g, "");
-                      setPaymentForm({...paymentForm, summa: val ? Number(val).toLocaleString() : ""});
+                      let val = Number(e.target.value.replace(/[^0-9]/g, ""));
+                      if (val > maxPayable) val = maxPayable;
+                      setPaymentForm({...paymentForm, summa: val ? val.toLocaleString() : ""});
                     }} 
                   />
                   <span className="input-suffix">so'm</span>
