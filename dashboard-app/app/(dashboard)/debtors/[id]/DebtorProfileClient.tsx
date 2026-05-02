@@ -46,15 +46,25 @@ export function DebtorProfileClient({ debtor }: { debtor: any }) {
     setIsGenerating(templateName);
     try {
       const loan = debtor.loans[0];
+      const qarzSummasi = loan ? loan.qarzSummasi : 0;
+      const qoldiq = loan ? Math.max(0, loan.qarzSummasi - loan.payments.reduce((s: number, p: any) => s + p.summa, 0)) : 0;
+      const oylikTolov = loan ? (loan.loanType === '20_yil' ? Math.round(qarzSummasi / 240) : Math.round(qarzSummasi / 84)) : 0;
+
       const data = {
-        FISH: debtor.fish || "F.I.SH",
+        FISH: (debtor.fish || "F.I.SH").toUpperCase(),
+        FISH_NORMAL: debtor.fish || "F.I.SH",
         PASPORT: debtor.pasport || "",
         JSHSHIR: debtor.jshshir || "",
         MANZIL: debtor.manzil || "",
         TELEFON: debtor.telefon || "",
-        QARZ_SUMMASI: loan ? formatMoney(loan.qarzSummasi) : "0",
-        QARZ_QOLDIQ: loan ? formatMoney(Math.max(0, loan.qarzSummasi - loan.payments.reduce((s: number, p: any) => s + p.summa, 0))) : "0",
-        OYLIK_TOLOV: loan ? "285 791" : "0",
+        QARZ_SUMMASI: formatMoney(qarzSummasi),
+        QARZ_SUMMA_SOZ: qarzSummasi, // Backend will convert to words
+        QARZ_QOLDIQ: formatMoney(qoldiq),
+        QOLDIQ_SOZ: qoldiq, // Backend will convert to words
+        OYLIK_TOLOV: formatMoney(oylikTolov),
+        OYLIK_TOLOV_SOZ: oylikTolov, // Backend will convert to words
+        SANA: new Date().toLocaleDateString('ru-RU'),
+        SHARTNOMA_RAQAMI: loan?.id ? `2019000${loan.id}-son` : "___-son",
       };
 
       const res = await fetch("/api/documents/generate", {
