@@ -33,6 +33,32 @@
 
 ## Versiya tarixi
 
+### v0.5.0 — RBAC, Hujjat Shablonlari va Audit Loglar (2026-05-03)
+
+**Nima qilindi:**
+- ✅ **RBAC (Rollar):** `Super Admin`, `Buxgalter`, `Yurist` rollari joriy etildi va `auth.ts` middleware orqali ruxsatlar o'rnatildi.
+- ✅ **Hujjat shablonlari:** `.docx` shablonlarni yuklash, `{{FISH}}` kabi placeholderlarni avtomatik aniqlash va boshqarish. `documents/templates` sahifasi (faqat Admin uchun).
+- ✅ **Hujjatlar tarixi:** Yaratilgan avtomatik hujjatlarni kuzatish uchun `documents` sahifasi tayyorlandi.
+- ✅ **Audit Loglar:** Tizimdagi har bir xatti-harakatni IP, User Agent va davomiyligi bilan log qilish. `navigator.sendBeacon` orqali ishonchli sahifa kuzatuv (`usePageTracker`).
+- ✅ **Foydalanuvchi boshqaruvi:** `admin/users` sahifasida xodimlarni qo'shish, rolini o'zgartirish va bloklash.
+- ✅ **Fuqaro portali (`/fuqaro`):** Loginsiz ochiq tizim. JSHSHIR orqali izlash, read-only ma'lumotlar va qarz holatini ko'rish.
+- GitHub ga push qilindi: commit `9b560f8`
+
+**Rollar va ruxsatlar:**
+- **Super Admin (`admin@yoshlar.uz`):** Barcha sahifalar, loglar, users, templates boshqaruvi.
+- **Buxgalter (`buxgalter@yoshlar.uz`):** Dashboard, Qarzdorlar, To'lovlar, Hisobotlar.
+- **Yurist (`yurist@yoshlar.uz`):** Dashboard, Qarzdorlar, Sud, Hujjatlar.
+
+**Yaratilgan/o'zgartirilgan fayllar:**
+- `prisma/schema.prisma` — UserRole, AuditType enumlar qo'shildi. Template va AuditLog kengaytirildi.
+- `lib/rbac.ts` — [YANGI] Ruxsatnomalar matritsasi va helperlar.
+- `lib/utils/auditLogger.ts` — [YANGI] Server side log yozuvchi.
+- `hooks/usePageTracker.ts` — [YANGI] Client side sahifa davomiyligi va navigatsiyani kuzatuvchi.
+- `app/api/...` — templates, users, audit, fuqaro API route'lari.
+- `app/(dashboard)/admin/...` — Users va Logs boshqaruv UI.
+- `app/fuqaro/page.tsx` — [YANGI] Fuqarolar ochiq portali.
+
+---
 ### v0.4.0 — Auth tizimi: Login, Logout, Route Protection (2026-05-03)
 
 **Nima qilindi:**
@@ -128,7 +154,7 @@
 - [x] Route protection (proxy.ts) ✅ v0.4.0
 - [x] Session boshqaruvi (useSession, logout) ✅ v0.4.0
 - [ ] To'lovlar sahifasi (`/payments`) — jadval, filtr, yuklab olish
-- [ ] Hujjatlar markazi (`/documents`) — shablon tanlash, hujjat yaratish (Word/PDF)
+- [x] Hujjatlar markazi (`/documents`) — shablon tanlash, hujjat yaratish (Word/PDF) ✅ v0.5.0
 - [ ] Qarzdor profili: to'lov jadvali avtomatik hisoblash (20 yil / 7 yil)
 
 ### Ustuvorlik 2 — Huquqiy va analitik
@@ -142,8 +168,8 @@
 - [ ] SMS xabarnomalar (Eskiz.uz)
 - [ ] iBank to'lov import
 - [ ] Jarima hisoblash moduli
-- [ ] Audit trail (faollik logi)
-- [ ] Foydalanuvchi boshqaruvi
+- [x] Audit trail (faollik logi) ✅ v0.5.0
+- [x] Foydalanuvchi boshqaruvi ✅ v0.5.0
 
 ---
 
