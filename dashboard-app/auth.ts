@@ -10,12 +10,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Parol", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
-        // Dynamic import to avoid edge runtime issues
         const { prisma } = await import("./lib/prisma");
         const bcrypt = (await import("bcryptjs")).default;
 
@@ -23,7 +22,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { email: credentials.email as string },
         });
 
-        if (!user) {
+        if (!user || !user.isActive) {
           return null;
         }
 
@@ -33,7 +32,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
 
         if (passwordsMatch) {
-          return { id: user.id.toString(), email: user.email, name: user.name, role: user.role };
+          // Update last login info
+          const ip = request?.headers?.get?.("x-forwarded-for")
+            || request?.headers?.get?.("x-real-ip")
+            || "unknown";
+
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              lastLoginAt: new Date(),
+              lastLoginIp: typeof ip === "string" ? ip.split(",")[0].trim() : "unknown",
+            },
+          });
+
+          // Log login action
+          await prisma.auditLog.create({
+            data: {
+              userId: user.id,
+              amal: "Tizimga kirdi",
+              turi: "LOGIN",
+              ipAddress: typeof ip === "string" ? ip.split(",")[0].trim() : "unknown",
+            },
+          });
+
+          return {
+            id: user.id.toString(),
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          };
         }
 
         return null;
@@ -57,18 +84,41 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user;
-      const isLoginPage = request.nextUrl.pathname.startsWith("/login");
+      const pathname = request.nextUrl.pathname;
 
-      // Login sahifasiga ruxsat berish
-      if (isLoginPage) {
+      // Public pages — no auth required
+      if (pathname.startsWith("/fuqaro") || pathname.startsWith("/api/fuqaro")) {
+        return true;
+      }
+
+      // Login page
+      if (pathname.startsWith("/login")) {
         if (isLoggedIn) {
           return Response.redirect(new URL("/", request.nextUrl));
         }
         return true;
       }
 
-      // Boshqa barcha sahifalar — login bo'lishi kerak
-      return isLoggedIn;
+      // All other pages require login
+      if (!isLoggedIn) {
+        return false;
+      }
+
+      // Role-based page access check (inline to avoid edge runtime issues)
+      const role = auth?.user?.role;
+      if (role && role !== "SUPER_ADMIN") {
+        const ROLE_PAGES: Record<string, string[]> = {
+          BUXGALTER: ["/", "/debtors", "/payments", "/calendar", "/reports"],
+          YURIST: ["/", "/debtors", "/documents", "/court", "/calendar"],
+        };
+        const allowed = ROLE_PAGES[role] || [];
+        const isAllowed = allowed.some(p => pathname === p || pathname.startsWith(p + "/"));
+        if (!isAllowed && !pathname.startsWith("/api/")) {
+          return Response.redirect(new URL("/", request.nextUrl));
+        }
+      }
+
+      return true;
     },
   },
   pages: {

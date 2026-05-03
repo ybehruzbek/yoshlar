@@ -6,17 +6,42 @@ datasource db {
   provider = "postgresql"
 }
 
+// ── Enums ──
+
+enum UserRole {
+  SUPER_ADMIN
+  BUXGALTER
+  YURIST
+}
+
+enum AuditType {
+  LOGIN
+  LOGOUT
+  SAHIFA_OCHISH
+  AMAL
+  HUJJAT_YARATISH
+  YUKLASH
+  FUQARO_QIDIRUV
+}
+
+// ── Models ──
+
 model User {
-  id           Int        @id @default(autoincrement())
-  name         String?
-  email        String     @unique
-  passwordHash String
-  role         String     @default("operator")
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  auditLogs    AuditLog[]
-  notes        Note[]
-  warnings     Warning[]
+  id            Int        @id @default(autoincrement())
+  name          String?
+  email         String     @unique
+  passwordHash  String
+  role          UserRole   @default(YURIST)
+  isActive      Boolean    @default(true)
+  lastLoginAt   DateTime?
+  lastLoginIp   String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  auditLogs     AuditLog[]
+  notes         Note[]
+  warnings      Warning[]
+  createdDocs   Document[] @relation("DocumentCreator")
+  templates     Template[] @relation("TemplateCreator")
 }
 
 model Debtor {
@@ -103,12 +128,17 @@ model Payment {
 }
 
 model Template {
-  id           Int        @id @default(autoincrement())
+  id            Int        @id @default(autoincrement())
   nomi          String
   turi          String
-  kontent       String
-  ozgaruvchilar String
-  kimYaratdi    String?
+  faylNomi      String
+  faylHajmi     Int?
+  ozgaruvchilar String     @default("[]")
+  kimYaratdiId  Int?
+  kimYaratdi    User?      @relation("TemplateCreator", fields: [kimYaratdiId], references: [id])
+  rollar        String     @default("[\"SUPER_ADMIN\",\"YURIST\"]")
+  faol          Boolean    @default(true)
+  createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
   documents     Document[]
 }
@@ -121,7 +151,8 @@ model Document {
   faylYoli      String?
   generatedData String?
   holat         String    @default("yaratilgan")
-  kimYaratdi    String?
+  kimYaratdiId  Int?
+  kimYaratdi    User?     @relation("DocumentCreator", fields: [kimYaratdiId], references: [id])
   createdAt     DateTime  @default(now())
   shablon       Template? @relation(fields: [shablonId], references: [id])
   loan          Loan      @relation(fields: [loanId], references: [id], onDelete: Cascade)
@@ -170,14 +201,19 @@ model SmsLog {
 model AuditLog {
   id           Int        @id @default(autoincrement())
   userId       Int?
-  amal        String
-  model       String
-  modelId     String?
-  eskiQiymat  String?
-  yangiQiymat String?
-  ipAddress   String?
-  createdAt   DateTime @default(now())
-  user        User?    @relation(fields: [userId], references: [id])
+  amal         String
+  turi         AuditType  @default(AMAL)
+  model        String?
+  modelId      String?
+  eskiQiymat   String?
+  yangiQiymat  String?
+  ipAddress    String?
+  userAgent    String?
+  sahifa       String?
+  davomiyligi  Int?
+  meta         String?
+  createdAt    DateTime   @default(now())
+  user         User?      @relation(fields: [userId], references: [id])
 }
 
 model PenaltySetting {
