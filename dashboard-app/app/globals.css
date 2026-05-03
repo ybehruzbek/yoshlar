@@ -181,7 +181,7 @@ body {
 .sidebar-nav::-webkit-scrollbar { width: 0; }
 .nav-label {
   font-size: 10.5px; font-weight: 700; color: var(--text-tertiary);
-  text-transform: uppercase; letter-spacing: 1px; padding: 20px 12px 8px;
+  text-transform: uppercase; letter-spacing: 1px; padding: 12px 12px 8px;
 }
 
 .nav-item {
@@ -195,6 +195,7 @@ body {
 .nav-item.active { background: var(--text-primary); color: var(--bg); font-weight: 600; }
 
 .nav-icon { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; }
+
 .nav-badge {
   margin-left: auto; background: var(--red); color: var(--bg);
   font-size: 11px; font-weight: 700; padding: 2px 8px;

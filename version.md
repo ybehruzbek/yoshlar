@@ -157,6 +157,9 @@
 - 🧑‍💻 **Fuqaro Portali (`/fuqaro`):** Tailwind klasslaridan to'liq custom CSS (`.fuqaro-*`) ga o'tkazildi.
 - 🚧 **Sidebar Skeleton va RBAC:** `Sidebar.tsx` da yuklanish holati uchun `SidebarSkeleton` qo'shildi. Ma'lumotlar bazasidagi `admin` roliga nisbatan sezgirlik muammosi `normalizeRole()` funksiyasi orqali bartaraf etildi (to'g'ridan-to'g'ri bo'sh sidebar ko'rinishining oldi olindi).
 - 👤 **Profil Kartasi:** Sidebardagi foydalanuvchi profiliga Apple style (glassmorphism, subtle gradients, and soft hover state) tatbiq etildi.
+- 📐 **Sidebar Bo'shliqlari:** "ASOSIY MENYU" va "MA'MURIYAT" bo'limlari tepasidagi keraksiz padding va marginlar olib tashlanib, ixchamlashtirildi.
+- 📄 **Shablonlar Sahifasi (`/documents/templates`):** Tailwind'dan tozalash ishlari doirasida to'liq Bento Grid va Apple Style qoidalariga asoslanib noldan qayta dizayn qilindi.
+
 
 ---
 

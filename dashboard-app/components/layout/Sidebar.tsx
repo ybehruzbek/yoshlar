@@ -128,7 +128,7 @@ export function Sidebar() {
 
         {adminItems.length > 0 && (
           <>
-            <div className="nav-label" style={{ marginTop: 24 }}>MA'MURIYAT</div>
+            <div className="nav-label" style={{ marginTop: 8 }}>MA'MURIYAT</div>
             {adminItems.map((item) => (
               <NavItem key={item.key} item={item} currentPath={pathname} stats={stats} />
             ))}

@@ -105,168 +105,176 @@ export default function TemplatesPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-semibold mb-1">Shablonlar</h1>
-          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-            Avtomatik hujjat yaratish uchun .docx shablonlarni boshqarish
-          </p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div className="page-header">
+        <h1 className="page-title">Shablonlar</h1>
+        <div style={{ color: "var(--text-secondary)", fontSize: "14px", marginTop: "4px" }}>
+          Avtomatik hujjat yaratish uchun Word (.docx) shablonlarini boshqarish
         </div>
       </div>
 
-      <div className="card" style={{ padding: "24px" }}>
-        <h2 className="text-lg font-medium mb-4">Yangi shablon yuklash</h2>
-        <div className="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", alignItems: "end" }}>
-          <div>
-            <label className="input-label">Shablon nomi</label>
-            <input 
-              type="text" 
-              className="input-field" 
-              placeholder="Masalan: Da'vo ariza 2025" 
-              value={nomi}
-              onChange={(e) => setNomi(e.target.value)}
-            />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', alignItems: 'start' }}>
+        
+        {/* Yuklash formasi */}
+        <div className="card" style={{ padding: "24px", position: 'sticky', top: '24px' }}>
+          <div style={{ marginBottom: "20px" }}>
+            <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-primary)" }}>Yangi shablon yuklash</div>
+            <div style={{ fontSize: "13px", color: "var(--text-tertiary)", marginTop: "4px" }}>.docx formatidagi faylni tizimga yuklang</div>
           </div>
-          <div>
-            <label className="input-label">Hujjat turi</label>
-            <CustomSelect
-              options={[
-                { value: "Da'vo ariza", label: "Da'vo ariza" },
-                { value: "Talabnoma", label: "Talabnoma" },
-                { value: "Ogohlantirish", label: "Ogohlantirish" },
-                { value: "Boshqa", label: "Boshqa" },
-              ]}
-              value={turi}
-              onChange={setTuri}
-            />
-          </div>
-          <div>
-            <label className="input-label">Word fayl (.docx)</label>
-            <div className="flex gap-2">
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <label className="input-label">Shablon nomi</label>
+              <input 
+                type="text" 
+                className="input-field" 
+                placeholder="Masalan: Da'vo ariza 2025" 
+                value={nomi}
+                onChange={(e) => setNomi(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="input-label">Hujjat turi</label>
+              <CustomSelect
+                options={[
+                  { value: "Da'vo ariza", label: "Da'vo ariza" },
+                  { value: "Talabnoma", label: "Talabnoma" },
+                  { value: "Ogohlantirish", label: "Ogohlantirish" },
+                  { value: "Boshqa", label: "Boshqa" },
+                ]}
+                value={turi}
+                onChange={setTuri}
+              />
+            </div>
+            <div>
+              <label className="input-label">Word fayl biriktirish</label>
               <input 
                 type="file" 
                 accept=".docx"
                 id="template-upload"
-                className="hidden"
                 onChange={handleFileSelect}
                 style={{ display: "none" }}
               />
               <label 
                 htmlFor="template-upload" 
                 className="btn btn-secondary" 
-                style={{ flex: 1, display: "flex", justifyContent: "center", cursor: "pointer" }}
+                style={{ width: '100%', display: "flex", justifyContent: "center", cursor: "pointer", padding: "12px", borderStyle: "dashed", borderWidth: "2px", borderColor: "var(--border-strong)", background: "transparent" }}
               >
-                <UploadSimple size={18} />
-                {selectedFile ? selectedFile.name : "Fayl tanlash"}
+                <UploadSimple size={20} style={{ marginRight: "8px", color: "var(--text-tertiary)" }} />
+                <span style={{ color: selectedFile ? "var(--text-primary)" : "var(--text-secondary)", fontWeight: 500 }}>
+                  {selectedFile ? selectedFile.name : "Fayl tanlash (.docx)"}
+                </span>
               </label>
+            </div>
+
+            <div style={{ marginTop: "8px" }}>
+              <button 
+                className="btn btn-primary" 
+                onClick={handleUpload}
+                disabled={isUploading || !nomi || !selectedFile}
+                style={{ width: "100%", padding: "12px", justifyContent: "center" }}
+              >
+                {isUploading ? "Yuklanmoqda..." : "Shablonni saqlash"}
+              </button>
             </div>
           </div>
         </div>
-        
-        {selectedFile && (
-          <div className="mt-4 flex justify-end">
-            <button 
-              className="btn btn-primary" 
-              onClick={handleUpload}
-              disabled={isUploading || !nomi}
-            >
-              {isUploading ? "Yuklanmoqda..." : "Shablonni yuklash"}
-            </button>
-          </div>
-        )}
-      </div>
 
-      <div className="card">
-        <div className="card-head">
-          <div className="card-title">Mavjud shablonlar</div>
-        </div>
-        
-        {isLoading ? (
-          <div style={{ padding: "40px", textAlign: "center", color: "var(--text-secondary)" }}>
-            Yuklanmoqda...
+        {/* Mavjud shablonlar */}
+        <div className="card" style={{ gridColumn: 'span 2' }}>
+          <div className="card-head">
+            <div className="card-title">Mavjud shablonlar</div>
           </div>
-        ) : templates.length === 0 ? (
-          <div style={{ padding: "40px", textAlign: "center", color: "var(--text-secondary)" }}>
-            Shablonlar topilmadi
-          </div>
-        ) : (
-          <div className="table-responsive">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Nomi</th>
-                  <th>Turi</th>
-                  <th>O'zgaruvchilar</th>
-                  <th>Fayl</th>
-                  <th>Holati</th>
-                  <th style={{ textAlign: "right" }}>Amallar</th>
-                </tr>
-              </thead>
-              <tbody>
-                {templates.map((t) => {
-                  let vars = [];
-                  try { vars = JSON.parse(t.ozgaruvchilar); } catch (e) {}
-                  
-                  return (
-                    <tr key={t.id}>
-                      <td style={{ fontWeight: 500 }}>
-                        <div className="flex items-center gap-2">
-                          <FileDoc size={18} color="var(--primary)" />
-                          {t.nomi}
-                        </div>
-                      </td>
-                      <td>
-                        <span className="badge" style={{ background: "var(--bg-tertiary)" }}>
-                          {t.turi}
-                        </span>
-                      </td>
-                      <td>
-                        <div style={{ fontSize: "13px", maxWidth: "200px" }}>
-                          {vars.length} ta aniqlandi:
-                          <span style={{ color: "var(--text-secondary)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {vars.slice(0, 3).join(", ")} {vars.length > 3 ? "..." : ""}
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ fontSize: "13px" }}>
-                          {t.faylNomi}
-                          <div style={{ color: "var(--text-secondary)" }}>
-                            {t.faylHajmi ? Math.round(t.faylHajmi / 1024) + " KB" : "-"}
+          
+          {isLoading ? (
+            <div style={{ padding: "60px", textAlign: "center", color: "var(--text-secondary)" }}>
+              Yuklanmoqda...
+            </div>
+          ) : templates.length === 0 ? (
+            <div style={{ padding: "60px", textAlign: "center", color: "var(--text-secondary)" }}>
+              Hozircha tizimda shablonlar mavjud emas.
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Nomi</th>
+                    <th>Turi</th>
+                    <th>Fayl / O'zgaruvchilar</th>
+                    <th>Holati</th>
+                    <th style={{ textAlign: "right" }}>Amallar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {templates.map((t) => {
+                    let vars = [];
+                    try { vars = JSON.parse(t.ozgaruvchilar); } catch (e) {}
+                    
+                    return (
+                      <tr key={t.id}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
+                              <FileDoc size={20} weight="fill" />
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '14px' }}>{t.nomi}</div>
+                              <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '2px' }}>ID: #{t.id}</div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td>
-                        <button 
-                          onClick={() => toggleFaol(t.id, t.faol)}
-                          className={`badge flex items-center gap-1 cursor-pointer`}
-                          style={{ 
-                            background: t.faol ? "var(--success-bg)" : "var(--danger-bg)",
-                            color: t.faol ? "var(--success-text)" : "var(--danger-text)",
-                            border: "none"
-                          }}
-                        >
-                          {t.faol ? <CheckCircle size={14} /> : <XCircle size={14} />}
-                          {t.faol ? "Faol" : "O'chirilgan"}
-                        </button>
-                      </td>
-                      <td style={{ textAlign: "right" }}>
-                        <button 
-                          className="btn-icon danger" 
-                          onClick={() => handleDelete(t.id)}
-                          title="O'chirish"
-                        >
-                          <Trash size={18} />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                        </td>
+                        <td>
+                          <span className="badge" style={{ background: "var(--bg-hover)", color: "var(--text-secondary)" }}>
+                            {t.turi}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
+                            {t.faylNomi}
+                          </div>
+                          <div style={{ fontSize: "12px", color: "var(--text-tertiary)", marginTop: "2px" }}>
+                            {vars.length} ta o'zgaruvchi topildi
+                          </div>
+                        </td>
+                        <td>
+                          <button 
+                            onClick={() => toggleFaol(t.id, t.faol)}
+                            className="badge"
+                            style={{ 
+                              background: t.faol ? "var(--green-bg)" : "var(--red-bg)",
+                              color: t.faol ? "var(--green-text)" : "var(--red)",
+                              border: "none",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              transition: "all 0.2s"
+                            }}
+                          >
+                            {t.faol ? <CheckCircle size={14} weight="fill" /> : <XCircle size={14} weight="fill" />}
+                            {t.faol ? "Faol" : "Faol emas"}
+                          </button>
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          <button 
+                            className="btn-icon danger" 
+                            onClick={() => handleDelete(t.id)}
+                            title="O'chirish"
+                            style={{ background: 'var(--bg-hover)' }}
+                          >
+                            <Trash size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
