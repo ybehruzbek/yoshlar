@@ -5,6 +5,22 @@ import { UserRole } from "@prisma/client";
  * Defines which roles can access which pages and perform which actions.
  */
 
+// Normalize legacy/mismatched role values
+const ROLE_MAP: Record<string, UserRole> = {
+  admin: "SUPER_ADMIN",
+  ADMIN: "SUPER_ADMIN",
+  super_admin: "SUPER_ADMIN",
+  buxgalter: "BUXGALTER",
+  yurist: "YURIST",
+};
+
+export function normalizeRole(role: string): UserRole {
+  if (["SUPER_ADMIN", "BUXGALTER", "YURIST"].includes(role)) {
+    return role as UserRole;
+  }
+  return ROLE_MAP[role] || "SUPER_ADMIN";
+}
+
 // Pages each role can access (supports glob * for dynamic segments)
 const PAGE_ACCESS: Record<UserRole, string[]> = {
   SUPER_ADMIN: ["*"], // All pages

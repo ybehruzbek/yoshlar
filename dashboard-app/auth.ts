@@ -1,7 +1,11 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { authConfig } from "./auth.config";
+import { prisma } from "./lib/prisma";
+import bcrypt from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   session: { strategy: "jwt" },
   providers: [
     CredentialsProvider({
@@ -14,9 +18,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
-
-        const { prisma } = await import("./lib/prisma");
-        const bcrypt = (await import("bcryptjs")).default;
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
@@ -67,61 +68,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = user.role;
-        token.id = user.id;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.role = token.role as string;
-        session.user.id = token.id as string;
-      }
-      return session;
-    },
-    authorized({ auth, request }) {
-      const isLoggedIn = !!auth?.user;
-      const pathname = request.nextUrl.pathname;
-
-      // Public pages — no auth required
-      if (pathname.startsWith("/fuqaro") || pathname.startsWith("/api/fuqaro")) {
-        return true;
-      }
-
-      // Login page
-      if (pathname.startsWith("/login")) {
-        if (isLoggedIn) {
-          return Response.redirect(new URL("/", request.nextUrl));
-        }
-        return true;
-      }
-
-      // All other pages require login
-      if (!isLoggedIn) {
-        return false;
-      }
-
-      // Role-based page access check (inline to avoid edge runtime issues)
-      const role = auth?.user?.role;
-      if (role && role !== "SUPER_ADMIN") {
-        const ROLE_PAGES: Record<string, string[]> = {
-          BUXGALTER: ["/", "/debtors", "/payments", "/calendar", "/reports"],
-          YURIST: ["/", "/debtors", "/documents", "/court", "/calendar"],
-        };
-        const allowed = ROLE_PAGES[role] || [];
-        const isAllowed = allowed.some(p => pathname === p || pathname.startsWith(p + "/"));
-        if (!isAllowed && !pathname.startsWith("/api/")) {
-          return Response.redirect(new URL("/", request.nextUrl));
-        }
-      }
-
-      return true;
-    },
-  },
-  pages: {
-    signIn: "/login",
-  },
 });

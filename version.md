@@ -147,6 +147,19 @@
 
 ---
 
+### v0.6.0 — UI/UX & Apple Style Standardization
+
+**Bajarilgan ishlar:**
+- 🎨 **Dizayn Konsepsiyasi:** Loyiha uchun Apple-style (Bento Grid) dizayn tili to'liq tasdiqlandi va hujjatlashtirildi (`README.md`).
+- 🔄 **CSS Tozalash:** `tailwindcss` olib tashlandi. PostCSS kompilatsiya xatolari bartaraf etildi. Loyiha faqatgina toza CSS modul/sinflari asosida qurildi.
+- 🔧 **Global CSS tuzatishlar:** `.modal-backdrop`, `.btn-secondary`, `.table-responsive`, `.page-header`, `.badge-*` kabi 15+ missing klasslar `globals.css` ga qo'shildi.
+- 🧩 **Placeholder sahifalar yangilandi:** `/payments`, `/court`, `/calendar`, `/reports`, `/kpi` kabi bo'sh sahifalar oddiy textdan professional "Tez kunda" (Coming Soon) vizual holatiga o'tkazildi (Dizayn tizimiga moslashtirildi).
+- 🧑‍💻 **Fuqaro Portali (`/fuqaro`):** Tailwind klasslaridan to'liq custom CSS (`.fuqaro-*`) ga o'tkazildi.
+- 🚧 **Sidebar Skeleton va RBAC:** `Sidebar.tsx` da yuklanish holati uchun `SidebarSkeleton` qo'shildi. Ma'lumotlar bazasidagi `admin` roliga nisbatan sezgirlik muammosi `normalizeRole()` funksiyasi orqali bartaraf etildi (to'g'ridan-to'g'ri bo'sh sidebar ko'rinishining oldi olindi).
+- 👤 **Profil Kartasi:** Sidebardagi foydalanuvchi profiliga Apple style (glassmorphism, subtle gradients, and soft hover state) tatbiq etildi.
+
+---
+
 ## Qolgan ishlar (TODO)
 
 ### Ustuvorlik 1 — Asosiy funksionallik
