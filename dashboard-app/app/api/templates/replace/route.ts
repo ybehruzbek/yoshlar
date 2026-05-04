@@ -6,38 +6,7 @@ import PizZip from "pizzip";
 import fs from "fs";
 import path from "path";
 
-// GET: List all templates (filtered by role)
-export async function GET() {
-  try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Avtorizatsiya talab qilinadi" }, { status: 401 });
-    }
-
-    const role = session.user.role;
-    const isAdmin = role === "SUPER_ADMIN" || role === "admin";
-
-    const templates = await prisma.template.findMany({
-      where: isAdmin ? {} : { faol: true },
-      include: { kimYaratdi: { select: { name: true } } },
-      orderBy: { createdAt: "desc" },
-    });
-
-    // Filter by role (admin sees all)
-    const filtered = isAdmin
-      ? templates
-      : templates.filter(t => {
-          const rollar: string[] = JSON.parse(t.rollar);
-          return rollar.includes(role);
-        });
-
-    return NextResponse.json(filtered);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
-
-// POST: Upload a new template
+// POST: Replace template file + update metadata
 export async function POST(req: Request) {
   try {
     const session = await auth();
@@ -47,20 +16,32 @@ export async function POST(req: Request) {
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
-    const nomi = formData.get("nomi") as string || file.name;
-    const turi = formData.get("turi") as string || "boshqa";
-    const rollar = formData.get("rollar") as string || '["SUPER_ADMIN","YURIST"]';
+    const nomi = formData.get("nomi") as string;
+    const turi = formData.get("turi") as string;
+    const replaceId = formData.get("replaceId") as string;
 
     if (!file || !file.name.endsWith(".docx")) {
       return NextResponse.json({ error: "Faqat .docx fayllar qabul qilinadi" }, { status: 400 });
     }
 
-    // Read file
+    if (!replaceId) {
+      return NextResponse.json({ error: "replaceId majburiy" }, { status: 400 });
+    }
+
+    // Find existing template
+    const existing = await prisma.template.findUnique({ where: { id: Number(replaceId) } });
+    if (!existing) {
+      return NextResponse.json({ error: "Shablon topilmadi" }, { status: 404 });
+    }
+
+    // Read new file
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Extract placeholders from docx XML
+    // Extract placeholders from new docx
     const zip = new PizZip(buffer);
     const docXml = zip.file("word/document.xml")?.asText() || "";
+    
+    // Method 1: Direct XML search
     const placeholders: string[] = [];
     const regex = /\{\{([^}]+)\}\}/g;
     let match;
@@ -69,43 +50,57 @@ export async function POST(req: Request) {
         placeholders.push(match[0]);
       }
     }
+    
+    // Method 2: Clean text search (handles XML-split placeholders)
+    const cleanText = docXml.replace(/<[^>]+>/g, "");
+    const regex2 = /\{\{([^}]+)\}\}/g;
+    while ((match = regex2.exec(cleanText)) !== null) {
+      if (!placeholders.includes(match[0])) {
+        placeholders.push(match[0]);
+      }
+    }
 
-    // Save file to templates directory
+    // Remove old file
+    const oldFilePath = path.join(process.cwd(), "documents", "templates", existing.faylNomi);
+    if (fs.existsSync(oldFilePath) && existing.faylNomi !== file.name) {
+      fs.unlinkSync(oldFilePath);
+    }
+
+    // Save new file
     const templatesDir = path.join(process.cwd(), "documents", "templates");
     if (!fs.existsSync(templatesDir)) {
       fs.mkdirSync(templatesDir, { recursive: true });
     }
-    const filePath = path.join(templatesDir, file.name);
-    fs.writeFileSync(filePath, buffer);
+    const newFilePath = path.join(templatesDir, file.name);
+    fs.writeFileSync(newFilePath, buffer);
 
-    // Save to database
-    const template = await prisma.template.create({
+    // Update DB
+    const updated = await prisma.template.update({
+      where: { id: Number(replaceId) },
       data: {
-        nomi,
-        turi,
+        nomi: nomi || existing.nomi,
+        turi: turi || existing.turi,
         faylNomi: file.name,
         faylHajmi: buffer.length,
         ozgaruvchilar: JSON.stringify(placeholders),
-        kimYaratdiId: Number(session.user.id),
-        rollar,
       },
     });
 
     await logAudit({
       userId: Number(session.user.id),
-      amal: `Shablon yukladi: ${nomi}`,
-      turi: "YUKLASH",
+      amal: `Shablon faylini almashtirdi: ${updated.nomi}`,
+      turi: "AMAL",
       model: "Template",
-      modelId: String(template.id),
+      modelId: String(updated.id),
       ipAddress: getIpFromRequest(req),
     });
 
     return NextResponse.json({
-      ...template,
+      ...updated,
       ozgaruvchilar: placeholders,
     });
   } catch (error: any) {
-    console.error("Template upload error:", error);
+    console.error("Template replace error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

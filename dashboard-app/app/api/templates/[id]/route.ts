@@ -9,7 +9,7 @@ import path from "path";
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user || session.user.role !== "SUPER_ADMIN") {
+    if (!session?.user || (session.user.role !== "SUPER_ADMIN" && session.user.role !== "admin")) {
       return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
     }
 
