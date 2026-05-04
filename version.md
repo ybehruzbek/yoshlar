@@ -59,6 +59,37 @@
 - `app/fuqaro/page.tsx` — [YANGI] Fuqarolar ochiq portali.
 
 ---
+
+### v0.7.0 — Shablon Tizimi Qayta Yozildi + Qo'llanma (2026-05-04)
+
+**Nima qilindi:**
+- ✅ **Shablon yuklash tizimi qayta yozildi:** Vizual editor (brauzerda matn tanlash) o'rniga ishonchli usulga o'tildi — admin Word faylda o'zi `{{FISH}}`, `{{PASPORT}}` yozadi va platformaga yuklaydi.
+- ✅ **Avtomatik placeholder topish:** Yuklangan `.docx` fayldan barcha `{{...}}` o'zgaruvchilar avtomatik topiladi va chiroyli modal oynada ko'rsatiladi.
+- ✅ **Shablon tayyorlash qo'llanmasi:** Accordion ko'rinishidagi to'liq qo'llanma qo'shildi — barcha o'zgaruvchilar 4 kategoriyada jadvallarda, misollar va muhim eslatmalar bilan.
+- ✅ **O'chirish modali:** Shablonni o'chirishda chiroyli tasdiqlash oynasi (qizil ikonka, "Ortga qaytarib bo'lmaydi" ogohlantirishi).
+- ✅ **Sana ustuni:** Jadvalga "Sana" (createdAt) ustuni qo'shildi.
+- ✅ **Backend API lar:** `preview`, `save-with-replacements`, `replace` endpoint'lari yaratildi.
+- ✅ **Shablon fayllar tiklandi:** `Da'vo ariza.docx` va `Talabnoma uy-joy.docx` backuplardan qayta tiklandi.
+
+**Qo'llanmadagi o'zgaruvchilar (25+ ta):**
+- 👤 Shaxsiy: `{{FISH}}`, `{{PASPORT}}`, `{{JSHSHIR}}`, `{{MANZIL}}`
+- 💰 Moliyaviy: `{{QARZ_SUMMASI}}`, `{{QARZ_SUMMA_SOZ}}`, `{{QARZ_QOLDIQ}}`, `{{QOLDIQ_SOZ}}`, `{{OYLIK_TOLOV}}`, `{{OYLIK_TOLOV_SOZ}}`, `{{QARZ_MUDDATI_RAQAM}}`, `{{QARZ_MUDDATI_SOZ}}`
+- 📄 Shartnoma: `{{SHARTNOMA_SANA}}`, `{{SHARTNOMA_RAQAMI}}`, `{{NOTARIUS}}`, `{{OTKAZILGAN_SANA}}`, `{{TOLOV_BOSHLANISH_SANA}}`, `{{HOLAT_SANASI}}`, `{{DAVOGAR_MANZIL}}`, `{{TUMAN}}`, `{{NOTARIAL_TUMAN}}`
+- 📅 Sanalar: `{{TALABNOMA_SANA}}`, `{{BUGUNGI_SANA}}`, `{{OGOHLANTIRISH_XATLARI}}`, `{{BANK_FILIALI}}`
+
+**Yaratilgan/o'zgartirilgan fayllar:**
+- `app/(dashboard)/documents/templates/page.tsx` — to'liq qayta yozildi (yuklash + qo'llanma + o'chirish modal)
+- `app/api/templates/route.ts` — admin roli ruxsati qo'shildi
+- `app/api/templates/preview/route.ts` — [YANGI] mammoth.js bilan Word→HTML preview
+- `app/api/templates/save-with-replacements/route.ts` — [YANGI] kontekst-asosida aqlli almashtirish
+- `app/api/templates/replace/route.ts` — [YANGI] oddiy almashtirish
+- `components/templates/TemplateEditor.tsx` — [YANGI] vizual editor (hozir ishlatilmaydi, zaxirada)
+- `app/globals.css` — `.tpl-placeholder`, `.tpl-highlight` CSS qo'shildi
+- `documents/templates/Da'vo ariza.docx` — tiklandi
+- `documents/templates/Talabnoma uy-joy.docx` — tiklandi
+- GitHub ga push qilindi: commit `a70ec42`
+
+---
 ### v0.4.0 — Auth tizimi: Login, Logout, Route Protection (2026-05-03)
 
 **Nima qilindi:**
@@ -171,6 +202,7 @@
 - [x] Session boshqaruvi (useSession, logout) ✅ v0.4.0
 - [ ] To'lovlar sahifasi (`/payments`) — jadval, filtr, yuklab olish
 - [x] Hujjatlar markazi (`/documents`) — shablon tanlash, hujjat yaratish (Word/PDF) ✅ v0.5.0
+- [x] Shablon boshqaruvi (yuklash, qo'llanma, o'chirish) ✅ v0.7.0
 - [ ] Qarzdor profili: to'lov jadvali avtomatik hisoblash (20 yil / 7 yil)
 
 ### Ustuvorlik 2 — Huquqiy va analitik
@@ -205,5 +237,5 @@ Connection: postgresql://postgres:3785@localhost:5432/yoshlar_db
 ```
 Remote: https://github.com/ybehruzbek/yoshlar.git
 Branch: main
-Oxirgi commit: cf1639b (feat: login/logout, route protection)
+Oxirgi commit: a70ec42 (feat: Shablon tizimini qayta yozish)
 ```
